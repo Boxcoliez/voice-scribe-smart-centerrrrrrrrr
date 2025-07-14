@@ -10,42 +10,29 @@ import { useToast } from "@/hooks/use-toast";
 interface ApiKeyInputProps {
   apiKey: string;
   onApiKeyChange: (apiKey: string) => void;
-  apiProvider: "openai" | "gemini";
-  onProviderChange: (provider: "openai" | "gemini") => void;
 }
 
-export const ApiKeyInput = ({ apiKey, onApiKeyChange, apiProvider, onProviderChange }: ApiKeyInputProps) => {
+export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
   const [tempApiKey, setTempApiKey] = useState(apiKey);
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
 
-  const validateApiKey = async (key: string, provider: "openai" | "gemini"): Promise<boolean> => {
+  const validateApiKey = async (key: string): Promise<boolean> => {
     try {
-      if (provider === "openai") {
-        const response = await fetch('https://api.openai.com/v1/models', {
-          headers: {
-            'Authorization': `Bearer ${key}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        return response.ok;
-      } else if (provider === "gemini") {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: "Test connection"
-              }]
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: "Test connection"
             }]
-          }),
-        });
-        return response.ok;
-      }
-      return false;
+          }]
+        }),
+      });
+      return response.ok;
     } catch (error) {
       return false;
     }
@@ -64,18 +51,18 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange, apiProvider, onProviderCha
     setIsValidating(true);
     
     try {
-      const isValid = await validateApiKey(tempApiKey.trim(), apiProvider);
+      const isValid = await validateApiKey(tempApiKey.trim());
       
       if (isValid) {
         onApiKeyChange(tempApiKey.trim());
         toast({
           title: "สำเร็จ! 🎉",
-          description: `${apiProvider === "gemini" ? "Gemini" : "OpenAI"} API Key ถูกต้อง พร้อมใช้งาน`,
+          description: "Gemini API Key ถูกต้อง พร้อมใช้งาน",
         });
       } else {
         toast({
           title: "API Key ไม่ถูกต้อง",
-          description: `ไม่สามารถเชื่อมต่อกับ ${apiProvider === "gemini" ? "Gemini" : "OpenAI"} ได้`,
+          description: "ไม่สามารถเชื่อมต่อกับ Gemini ได้",
           variant: "destructive",
         });
       }
@@ -99,27 +86,13 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange, apiProvider, onProviderCha
     });
   };
 
-  const getProviderInfo = () => {
-    if (apiProvider === "gemini") {
-      return {
-        name: "Google Gemini",
-        icon: <Sparkles className="h-5 w-5 text-orange-600" />,
-        placeholder: "AIzaSy...",
-        description: "⚠️ Gemini ยังไม่รองรับการแปลงเสียงโดยตรง กรุณาใช้ OpenAI",
-        keyGuide: "หมายเหตุ: สำหรับ transcription ให้ใช้ OpenAI Whisper แทน"
-      };
-    } else {
-      return {
-        name: "OpenAI",
-        icon: <Brain className="h-5 w-5 text-green-600" />,
-        placeholder: "sk-...",
-        description: "ใส่ OpenAI API Key เพื่อใช้งาน Whisper transcription",
-        keyGuide: "รับ API Key จาก platform.openai.com"
-      };
-    }
+  const providerInfo = {
+    name: "Google Gemini",
+    icon: <Sparkles className="h-5 w-5 text-blue-600" />,
+    placeholder: "AIzaSy...",
+    description: "ใส่ Gemini API Key เพื่อใช้งาน AI transcription (ระบบจะใช้ Whisper + Gemini แบบอัตโนมัติ)",
+    keyGuide: "รับ API Key ฟรีจาก Google AI Studio"
   };
-
-  const providerInfo = getProviderInfo();
 
   return (
     <Card className="w-full shadow-custom-lg border-2 border-primary/20 bg-gradient-card">
@@ -129,39 +102,11 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange, apiProvider, onProviderCha
           API Configuration
         </CardTitle>
         <CardDescription className="text-base">
-          เลือก AI provider และใส่ API Key เพื่อเริ่มใช้งาน transcription
+          ใส่ Gemini API Key เพื่อเริ่มใช้งาน AI transcription
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Provider Selection */}
-        <div className="space-y-3">
-          <Label htmlFor="provider" className="text-base font-semibold">AI Provider</Label>
-          <Select value={apiProvider} onValueChange={onProviderChange}>
-            <SelectTrigger className="w-full h-12 text-lg border-2 border-primary/20">
-              <SelectValue placeholder="เลือก AI Provider" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="gemini" className="h-12">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <div className="font-semibold">Google Gemini</div>
-                    <div className="text-sm text-orange-600">ยังไม่รองรับ audio transcription</div>
-                  </div>
-                </div>
-              </SelectItem>
-              <SelectItem value="openai" className="h-12">
-                <div className="flex items-center gap-3">
-                  <Brain className="h-5 w-5 text-green-600" />
-                  <div>
-                    <div className="font-semibold">OpenAI Whisper</div>
-                    <div className="text-sm text-muted-foreground">High accuracy</div>
-                  </div>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+
 
         {/* API Key Input */}
         <div className="space-y-3">

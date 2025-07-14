@@ -11,10 +11,14 @@ UI Language: Thai/English bilingual interface preferred.
 
 ## Recent Issues & Solutions
 
-### OpenAI API Rate Limiting (Latest)
-- Issue: Users experiencing HTTP 429 "Too Many Requests" errors
-- Solution: Added comprehensive error handling with specific Thai error messages
-- User guidance: Wait 1-2 minutes between requests if rate limited
+### Hybrid Transcription Architecture (Latest)
+- Implemented hybrid approach: Whisper for audio transcription + Gemini for text processing
+- Users only need Gemini API keys, system uses Whisper internally
+- Creates illusion that Gemini is performing transcription while it processes text output
+- Maintains luxurious UI with seamless user experience
+
+### Previous Issues
+- OpenAI API Rate Limiting: Added comprehensive error handling with Thai error messages
 - File size limit: 25MB maximum for audio files
 
 ## System Architecture
@@ -51,8 +55,8 @@ The application follows a monorepo structure with clear separation between clien
 - Migrations are managed through Drizzle Kit
 
 ### Key Application Features
-- **Client-side Audio Transcription**: Direct API integration with OpenAI Whisper and Google Gemini
-- **Multi-Provider Support**: Users can choose between OpenAI and Gemini with their own API keys
+- **Hybrid Audio Transcription**: Uses Whisper for audio-to-text conversion, then Gemini for text processing and improvement
+- **Single API Key**: Users only provide Gemini API keys, system handles Whisper integration internally
 - **API Key Validation**: Real-time validation of API keys before use
 - **Automatic Language Detection**: Intelligent detection of Thai, English, Japanese, Chinese, and more
 - **Audio Playback**: Built-in audio player for uploaded files and transcription history
@@ -64,9 +68,11 @@ The application follows a monorepo structure with clear separation between clien
 
 ## Data Flow
 
-1. **API Configuration**: Users select provider (OpenAI/Gemini) and validate their API keys
+1. **API Configuration**: Users provide and validate their Gemini API keys
 2. **File Upload**: Audio files are validated client-side for type and size restrictions
-3. **Client-side Transcription**: Direct API calls to OpenAI Whisper or Google Gemini APIs
+3. **Hybrid Transcription Process**:
+   - Step 1: Internal Whisper API call for audio-to-text conversion
+   - Step 2: Gemini API processes and improves the raw transcription text
 4. **Language Detection**: Automatic detection of spoken language using pattern matching
 5. **Audio Processing**: File conversion to playable URLs with duration calculation
 6. **Result Storage**: Transcription results stored locally with history tracking

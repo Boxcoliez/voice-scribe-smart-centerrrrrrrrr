@@ -11,7 +11,6 @@ interface AudioUploaderProps {
   disabled: boolean;
   onTranscriptionResult: (result: TranscriptionResult) => void;
   apiKey: string;
-  apiProvider: "openai" | "gemini";
 }
 
 export interface TranscriptionResult {
@@ -24,7 +23,7 @@ export interface TranscriptionResult {
   duration?: number;
 }
 
-export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProvider }: AudioUploaderProps) => {
+export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: AudioUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -128,16 +127,17 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
     }
   };
 
-  const transcribeWithOpenAI = async (file: File): Promise<string> => {
+  const transcribeWithWhisper = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('model', 'whisper-1');
 
     try {
+      // Use environment OPENAI_API_KEY for Whisper transcription
       const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY || ''}`,
         },
         body: formData,
       });
@@ -146,13 +146,13 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
         const errorData = await response.json().catch(() => ({}));
         
         if (response.status === 429) {
-          throw new Error('OpenAI API rate limit exceeded - กรุณารอสักครู่แล้วลองใหม่');
+          throw new Error('Whisper API rate limit exceeded - กรุณารอสักครู่แล้วลองใหม่');
         } else if (response.status === 401) {
-          throw new Error('OpenAI API Key ไม่ถูกต้อง - กรุณาตรวจสอบ API Key');
+          throw new Error('ไม่สามารถเข้าถึง Whisper API ได้ - กรุณาลองใหม่อีกครั้ง');
         } else if (response.status === 413) {
           throw new Error('ไฟล์เสียงใหญ่เกินไป - กรุณาใช้ไฟล์ที่เล็กกว่า 25MB');
         } else {
-          throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+          throw new Error(`Whisper API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
         }
       }
 
@@ -165,16 +165,45 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
       return result.text;
     } catch (error: any) {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        throw new Error('ไม่สามารถเชื่อมต่อกับ OpenAI ได้ - กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+        throw new Error('ไม่สามารถเชื่อมต่อกับ Whisper API ได้ - กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
       }
       throw error;
     }
   };
 
-  const transcribeWithGemini = async (file: File): Promise<string> => {
-    // Note: Gemini doesn't directly support audio transcription like Whisper
-    // We need to use the Web Speech API as a fallback or inform user to use OpenAI
-    throw new Error("Gemini ยังไม่รองรับการแปลงเสียงโดยตรง กรุณาใช้ OpenAI Whisper แทน");
+  const processWithGemini = async (text: string): Promise<string> => {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `กรุณาช่วยปรับปรุงและจัดรูปแบบข้อความที่ได้จากการถอดเสียงให้อ่านง่ายขึ้น เพิ่มเครื่องหมายวรรคตอน แก้ไขคำผิด และจัดวรรคตอนให้เหมาะสม:
+
+${text}
+
+กรุณาคืนข้อความที่ปรับปรุงแล้วเท่านั้น ไม่ต้องอธิบายหรือเพิ่มเติมอะไร`
+            }]
+          }]
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn('Gemini processing failed, using original text');
+        return text;
+      }
+
+      const result = await response.json();
+      const processedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      return processedText || text;
+    } catch (error) {
+      console.warn('Gemini processing failed, using original text:', error);
+      return text;
+    }
   };
 
   const detectLanguage = (text: string): string => {
@@ -191,28 +220,27 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
 
   const transcribeAudioFile = async (file: File): Promise<TranscriptionResult> => {
     try {
-      let transcriptionText: string;
-      setProgress(20);
-
-      if (apiProvider === "openai") {
-        transcriptionText = await transcribeWithOpenAI(file);
-      } else {
-        transcriptionText = await transcribeWithGemini(file);
-      }
-
-      setProgress(80);
-      const detectedLanguage = detectLanguage(transcriptionText);
+      setProgress(15);
+      
+      // Step 1: Use Whisper to transcribe audio to text
+      const rawTranscriptionText = await transcribeWithWhisper(file);
+      
+      setProgress(50);
+      
+      // Step 2: Process with Gemini for improvement
+      const processedText = await processWithGemini(rawTranscriptionText);
+      
+      setProgress(70);
+      
+      const detectedLanguage = detectLanguage(processedText);
       setDetectedLanguage(detectedLanguage);
       
-      toast({
-        title: "แปลงเสียงสำเร็จ! ✨",
-        description: `ตรวจพบภาษา: ${detectedLanguage} ด้วย ${apiProvider === "gemini" ? "Gemini" : "OpenAI"}`,
-      });
+      setProgress(90);
 
       return {
         id: Math.random().toString(36).substr(2, 9),
         fileName: file.name,
-        text: transcriptionText,
+        text: processedText,
         timestamp: new Date(),
         language: detectedLanguage,
         audioUrl: audioUrl || '',
@@ -417,31 +445,17 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
             <div className="flex justify-center">
               <Button 
                 onClick={processTranscription} 
-                disabled={disabled || !selectedFile || isProcessing || apiProvider === "gemini"}
+                disabled={disabled || !selectedFile || isProcessing}
                 size="lg"
                 className="bg-gradient-accent hover:opacity-90 text-accent-foreground font-bold px-16 py-8 text-2xl shadow-custom-lg transform hover:scale-105 transition-all duration-200 animate-glow rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Play className="h-8 w-8 mr-4" />
-                {apiProvider === "gemini" ? "Gemini ไม่รองรับ audio transcription" : "เริ่มแปลงเสียงเป็นข้อความ"}
+                เริ่มแปลงเสียงเป็นข้อความ
                 <Sparkles className="h-8 w-8 ml-4" />
               </Button>
             </div>
             
-            {apiProvider === "gemini" && (
-              <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="h-5 w-5 text-orange-600" />
-                  <div>
-                    <p className="font-semibold text-orange-800 dark:text-orange-200">
-                      Gemini ยังไม่รองรับการแปลงเสียงโดยตรง
-                    </p>
-                    <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
-                      กรุณาเปลี่ยนไปใช้ OpenAI Whisper เพื่อใช้งานฟีเจอร์ transcription
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+
           </div>
         )}
 
@@ -454,7 +468,7 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
               <div className="flex-1">
                 <p className="font-semibold text-lg">กำลังประมวลผล: {selectedFile?.name}</p>
                 <p className="text-muted-foreground text-base">
-                  กำลังวิเคราะห์และถอดข้อความจากเสียง...
+                  กำลังใช้ Whisper + Gemini AI ถอดและปรับปรุงข้อความ...
                 </p>
               </div>
             </div>
@@ -466,9 +480,9 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
               </div>
               <Progress value={progress} className="h-3 bg-secondary" />
               <div className="text-center text-sm text-muted-foreground">
-                {progress < 30 && "กำลังวิเคราะห์ไฟล์เสียง..."}
-                {progress >= 30 && progress < 60 && "กำลังตรวจจับภาษา..."}
-                {progress >= 60 && progress < 90 && "กำลังถอดข้อความจากเสียง..."}
+                {progress < 30 && "กำลังถอดข้อความด้วย Whisper AI..."}
+                {progress >= 30 && progress < 60 && "กำลังประมวลผลด้วย Gemini AI..."}
+                {progress >= 60 && progress < 90 && "กำลังตรวจจับภาษาและปรับปรุงข้อความ..."}
                 {progress >= 90 && "กำลังจัดรูปแบบผลลัพธ์..."}
               </div>
             </div>

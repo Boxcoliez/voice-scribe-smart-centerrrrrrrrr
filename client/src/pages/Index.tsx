@@ -8,7 +8,6 @@ import { Mic, Sparkles, Zap, Shield, Globe } from "lucide-react";
 
 const Index = () => {
   const [apiKey, setApiKey] = useState<string>("");
-  const [apiProvider, setApiProvider] = useState<"openai" | "gemini">("openai");
   const [currentResult, setCurrentResult] = useState<TranscriptionResult | null>(null);
 
   const handleTranscriptionResult = (result: TranscriptionResult) => {
@@ -84,8 +83,6 @@ const Index = () => {
               <ApiKeyInput 
                 apiKey={apiKey} 
                 onApiKeyChange={setApiKey}
-                apiProvider={apiProvider}
-                onProviderChange={setApiProvider}
               />
             </div>
 
@@ -95,12 +92,11 @@ const Index = () => {
                 disabled={!apiKey}
                 onTranscriptionResult={handleTranscriptionResult}
                 apiKey={apiKey}
-                apiProvider={apiProvider}
               />
             </div>
 
-            {/* OpenAI Rate Limit Information */}
-            {apiProvider === "openai" && apiKey && (
+            {/* Hybrid Transcription Information */}
+            {apiKey && (
               <div className="animate-fade-in p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg mt-1">
@@ -108,11 +104,11 @@ const Index = () => {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-1">
-                      หมายเหตุเกี่ยวกับ OpenAI API
+                      เทคโนโลยี Hybrid AI Transcription
                     </h3>
                     <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                      <p>• หากได้รับข้อผิดพลาด "rate limit exceeded" แสดงว่าใช้งานเกินโควต้า</p>
-                      <p>• กรุณารอสักครู่ (1-2 นาที) แล้วลองใหม่</p>
+                      <p>• ใช้ Whisper AI เพื่อแปลงเสียงเป็นข้อความ</p>
+                      <p>• ประมวลผลและปรับปรุงด้วย Gemini AI</p>
                       <p>• ขนาดไฟล์เสียงต้องไม่เกิน 25MB</p>
                       <p>• รองรับไฟล์: MP3, WAV, M4A</p>
                     </div>
