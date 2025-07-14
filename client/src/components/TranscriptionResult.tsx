@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Download, Check, FileText, Sparkles, Play, Pause, Volume2 } from "lucide-react";
+import { Copy, Download, Check, FileText, Sparkles, Play, Pause, Volume2, Languages, AudioLines } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult as TranscriptionResultType } from "./AudioUploader";
 
@@ -14,26 +14,32 @@ interface TranscriptionResultProps {
 export const TranscriptionResult = ({ result }: TranscriptionResultProps) => {
   const [copied, setCopied] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
 
   if (!result) {
     return (
-      <Card className="w-full shadow-custom-lg border-2 border-dashed border-muted">
-        <CardHeader className="text-center py-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-muted to-muted/50 rounded-full flex items-center justify-center mb-4 animate-float">
-            <FileText className="h-8 w-8 text-muted-foreground" />
+      <Card className="w-full shadow-custom-xl border-2 border-dashed border-primary/20 bg-gradient-card">
+        <CardHeader className="text-center py-12">
+          <div className="mx-auto w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center mb-6 animate-float shadow-custom-lg">
+            <AudioLines className="h-10 w-10 text-white" />
           </div>
-          <CardTitle className="text-muted-foreground text-xl">ผลลัพธ์ Transcription</CardTitle>
-          <CardDescription className="text-base">
-            ข้อความที่แปลงได้จะแสดงที่นี่หลังจากการประมวลผลเสร็จสิ้น
+          <CardTitle className="text-foreground text-2xl font-bold">ผลลัพธ์การแปลงเสียง</CardTitle>
+          <CardDescription className="text-lg text-muted-foreground mt-2">
+            ข้อความที่แปลงจากเสียงจะปรากฏที่นี่ พร้อมความสามารถในการฟังเสียงต้นฉบับ
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-32 flex items-center justify-center text-muted-foreground border-2 border-dashed border-muted rounded-xl bg-muted/20">
-            <div className="text-center space-y-2">
-              <Sparkles className="h-8 w-8 mx-auto opacity-50 animate-shimmer" />
-              <p className="text-lg">รอการอัปโหลดไฟล์เสียง</p>
+          <div className="h-40 flex items-center justify-center text-muted-foreground border-2 border-dashed border-primary/30 rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5">
+            <div className="text-center space-y-4">
+              <div className="relative">
+                <Sparkles className="h-12 w-12 mx-auto text-primary animate-pulse" />
+                <div className="absolute inset-0 h-12 w-12 mx-auto bg-primary/20 rounded-full animate-ping"></div>
+              </div>
+              <p className="text-xl font-medium">รอการอัปโหลดไฟล์เสียง</p>
+              <p className="text-sm opacity-70">ระบบพร้อมตรวจจับภาษาและแปลงเป็นข้อความ</p>
             </div>
           </div>
         </CardContent>

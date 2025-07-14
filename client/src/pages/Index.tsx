@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ApiKeyInput } from "@/components/ApiKeyInput";
 import { AudioUploader, TranscriptionResult } from "@/components/AudioUploader";
 import { TranscriptionResult as TranscriptionResultComponent } from "@/components/TranscriptionResult";
 import { TranscriptionHistory } from "@/components/TranscriptionHistory";
@@ -7,7 +6,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Mic, Sparkles, Zap, Shield, Globe } from "lucide-react";
 
 const Index = () => {
-  const [apiKey, setApiKey] = useState<string>("");
   const [currentResult, setCurrentResult] = useState<TranscriptionResult | null>(null);
 
   const handleTranscriptionResult = (result: TranscriptionResult) => {
@@ -35,12 +33,10 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-4">
-              {apiKey && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-success/20 to-success/10 text-success rounded-full border-2 border-success/30 shadow-custom-sm">
-                  <Sparkles className="h-5 w-5" />
-                  <span className="hidden sm:inline font-semibold">พร้อมใช้งาน</span>
-                </div>
-              )}
+              <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-success/20 to-success/10 text-success rounded-full border-2 border-success/30 shadow-custom-sm">
+                <Sparkles className="h-5 w-5" />
+                <span className="hidden sm:inline font-semibold">AI Ready</span>
+              </div>
               <ThemeToggle />
             </div>
           </div>
@@ -78,20 +74,11 @@ const Index = () => {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Left Column - Controls */}
           <div className="space-y-8">
-            {/* API Key Section */}
-            <div className="animate-fade-in">
-              <ApiKeyInput 
-                apiKey={apiKey} 
-                onApiKeyChange={setApiKey} 
-              />
-            </div>
-
             {/* Upload Section */}
-            <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <div className="animate-fade-in">
               <AudioUploader
-                disabled={!apiKey}
+                disabled={false}
                 onTranscriptionResult={handleTranscriptionResult}
-                apiKey={apiKey}
               />
             </div>
           </div>

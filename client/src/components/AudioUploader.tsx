@@ -2,13 +2,15 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Upload, FileAudio, X, Loader2, Play, Sparkles, Pause, Volume2 } from "lucide-react";
+import { Upload, FileAudio, X, Loader2, Play, Sparkles, Pause, Volume2, Languages, AudioLines } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { uploadFile } from "@/lib/queryClient";
+import { Badge } from "@/components/ui/badge";
 
 interface AudioUploaderProps {
   disabled: boolean;
   onTranscriptionResult: (result: TranscriptionResult) => void;
-  apiKey: string;
+  apiKey?: string; // Made optional since we're using server-side API
 }
 
 export interface TranscriptionResult {
@@ -21,7 +23,7 @@ export interface TranscriptionResult {
   duration?: number;
 }
 
-export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: AudioUploaderProps) => {
+export const AudioUploader = ({ disabled, onTranscriptionResult }: AudioUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -29,6 +31,8 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioDuration, setAudioDuration] = useState<number>(0);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
@@ -61,15 +65,21 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
   const handleFileSelect = (file: File) => {
     if (validateFile(file)) {
       setSelectedFile(file);
+      setDetectedLanguage(null);
       
-      // สร้าง URL สำหรับเล่นเสียง
+      // Create URL for audio playback
       const url = URL.createObjectURL(file);
       setAudioUrl(url);
       
-      // สร้าง audio element เพื่อดูความยาว
+      // Create audio element to get duration
       const audio = new Audio(url);
       audio.addEventListener('loadedmetadata', () => {
         setAudioDuration(audio.duration);
+      });
+
+      toast({
+        title: "ไฟล์เสียงพร้อมแล้ว! 🎵",
+        description: `เลือกไฟล์ ${file.name} แล้ว กดปุ่มเพื่อเริ่มแปลงเป็นข้อความ`,
       });
     }
   };
@@ -117,145 +127,64 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
     }
   };
 
-  // ฟังก์ชันถอดข้อความจากเสียงจริงๆ ด้วย Web Speech API
-  const transcribeAudioFile = async (file: File): Promise<{ text: string; language: string }> => {
-    return new Promise((resolve, reject) => {
-      // ตรวจสอบว่าเบราว์เซอร์รองรับ Web Speech API หรือไม่
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        // ถ้าไม่รองรับ ใช้การจำลองแทน
-        resolve(simulateTranscription(file));
-        return;
-      }
-
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      
-      // ตั้งค่า recognition
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      
-      // ตรวจจับภาษาจากชื่อไฟล์
-      const fileName = file.name.toLowerCase();
-      if (fileName.includes('th') || fileName.includes('thai') || fileName.includes('ไทย')) {
-        recognition.lang = 'th-TH';
-      } else if (fileName.includes('en') || fileName.includes('english') || fileName.includes('eng')) {
-        recognition.lang = 'en-US';
-      } else if (fileName.includes('jp') || fileName.includes('japanese') || fileName.includes('日本')) {
-        recognition.lang = 'ja-JP';
-      } else {
-        recognition.lang = 'th-TH'; // default
-      }
-
-      let finalTranscript = '';
-      
-      recognition.onresult = (event: any) => {
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript + ' ';
-          }
-        }
-      };
-
-      recognition.onend = () => {
-        if (finalTranscript.trim()) {
-          const language = recognition.lang === 'th-TH' ? 'ไทย' : 
-                          recognition.lang === 'en-US' ? 'English' : 
-                          recognition.lang === 'ja-JP' ? '日本語' : 'ไทย';
-          resolve({
-            text: finalTranscript.trim(),
-            language: language
-          });
-        } else {
-          // ถ้าไม่ได้ผลลัพธ์ ใช้การจำลอง
-          resolve(simulateTranscription(file));
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        // ถ้าเกิดข้อผิดพลาด ใช้การจำลอง
-        resolve(simulateTranscription(file));
-      };
-
-      // เล่นไฟล์เสียงและเริ่ม recognition
-      const audio = new Audio(URL.createObjectURL(file));
-      audio.onplay = () => {
-        recognition.start();
-      };
-      
-      audio.onended = () => {
-        recognition.stop();
-      };
-      
-      audio.play().catch(() => {
-        // ถ้าเล่นไม่ได้ ใช้การจำลอง
-        resolve(simulateTranscription(file));
+  // Real transcription using OpenAI API
+  const transcribeAudioFile = async (file: File): Promise<TranscriptionResult> => {
+    try {
+      const result = await uploadFile('/api/transcribe', file, (progress) => {
+        setProgress(progress);
       });
-    });
-  };
 
-  // ฟังก์ชันจำลองการถอดข้อความ (สำหรับกรณีที่ Web Speech API ไม่รองรับ)
-  const simulateTranscription = (file: File): { text: string; language: string } => {
-    const fileName = file.name.toLowerCase();
-    
-    if (fileName.includes('th') || fileName.includes('thai') || fileName.includes('ไทย')) {
+      setDetectedLanguage(result.language);
+      
+      toast({
+        title: "แปลงเสียงสำเร็จ! ✨",
+        description: `ตรวจพบภาษา: ${getLanguageName(result.language)}`,
+      });
+
       return {
-        text: "สวัสดีครับ วันนี้ผมจะมาพูดเรื่องการใช้งานระบบ Contact Center ของเรา ระบบนี้ได้รับการพัฒนาขึ้นเพื่อให้บริการลูกค้าได้อย่างมีประสิทธิภาพ สามารถจัดการคำถามและปัญหาต่างๆ ได้อย่างรวดเร็ว ทีมงานของเราพร้อมให้บริการตลอด 24 ชั่วโมง หากท่านมีข้อสงสัยใดๆ สามารถติดต่อเราได้ทันที ขอบคุณครับ",
-        language: "ไทย"
+        id: result.id,
+        fileName: result.fileName,
+        text: result.text,
+        timestamp: new Date(result.timestamp),
+        language: result.language,
+        audioUrl: audioUrl || '',
+        duration: result.duration || audioDuration
       };
-    } else if (fileName.includes('en') || fileName.includes('english') || fileName.includes('eng')) {
-      return {
-        text: "Hello and welcome to our Contact Center system. This advanced platform has been designed to provide exceptional customer service with maximum efficiency. Our team is available 24/7 to assist you with any questions or concerns you may have. We utilize cutting-edge technology to ensure quick response times and accurate solutions. Thank you for choosing our services, and we look forward to serving you.",
-        language: "English"
-      };
-    } else if (fileName.includes('jp') || fileName.includes('japanese') || fileName.includes('日本')) {
-      return {
-        text: "こんにちは。本日は弊社のコンタクトセンターシステムをご利用いただき、ありがとうございます。このシステムは、お客様により良いサービスを提供するために開発されました。24時間体制でサポートを行っており、どのようなご質問やお困りごとにも迅速に対応いたします。最新の技術を活用し、効率的なサービスを心がけております。何かご不明な点がございましたら、お気軽にお声かけください。",
-        language: "日本語"
-      };
-    } else {
-      return {
-        text: "สวัสดีครับ ยินดีต้อนรับสู่ระบบของเรา ระบบนี้สามารถถอดข้อความจากเสียงได้อย่างแม่นยำ",
-        language: "ไทย"
-      };
+    } catch (error) {
+      console.error('Transcription error:', error);
+      throw error;
     }
   };
 
+  const getLanguageName = (languageCode: string): string => {
+    const languageMap: Record<string, string> = {
+      'en': 'English',
+      'th': 'ไทย (Thai)',
+      'zh': '中文 (Chinese)',
+      'ja': '日本語 (Japanese)',
+      'ko': '한국어 (Korean)',
+      'es': 'Español (Spanish)',
+      'fr': 'Français (French)',
+      'de': 'Deutsch (German)',
+      'it': 'Italiano (Italian)',
+      'pt': 'Português (Portuguese)',
+      'ru': 'Русский (Russian)',
+      'ar': 'العربية (Arabic)',
+      'hi': 'हिन्दी (Hindi)',
+    };
+    
+    return languageMap[languageCode] || languageCode.toUpperCase();
+  };
+
   const processTranscription = async () => {
-    if (!selectedFile || !apiKey) return;
+    if (!selectedFile) return;
 
     setIsProcessing(true);
     setProgress(0);
 
     try {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 500);
-
-      // ใช้ฟังก์ชันถอดข้อความจริง
-      const transcriptionResult = await transcribeAudioFile(selectedFile);
-      
-      clearInterval(progressInterval);
+      const result = await transcribeAudioFile(selectedFile);
       setProgress(100);
-
-      // Create result
-      const result: TranscriptionResult = {
-        id: `trans_${Date.now()}`,
-        fileName: selectedFile.name,
-        text: transcriptionResult.text,
-        timestamp: new Date(),
-        language: transcriptionResult.language,
-        audioUrl: audioUrl || undefined,
-        duration: audioDuration
-      };
 
       setTimeout(() => {
         onTranscriptionResult(result);
@@ -264,10 +193,11 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
         setAudioDuration(0);
         setIsProcessing(false);
         setProgress(0);
+        setDetectedLanguage(null);
         
         toast({
           title: "สำเร็จ! 🎉",
-          description: `แปลงเสียงเป็นข้อความเรียบร้อยแล้ว (${transcriptionResult.language})`,
+          description: `แปลงเสียงเป็นข้อความเรียบร้อยแล้ว`,
         });
       }, 800);
 
