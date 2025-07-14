@@ -7,6 +7,15 @@ This is a modern full-stack web application built with a React frontend and Expr
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+UI Language: Thai/English bilingual interface preferred.
+
+## Recent Issues & Solutions
+
+### OpenAI API Rate Limiting (Latest)
+- Issue: Users experiencing HTTP 429 "Too Many Requests" errors
+- Solution: Added comprehensive error handling with specific Thai error messages
+- User guidance: Wait 1-2 minutes between requests if rate limited
+- File size limit: 25MB maximum for audio files
 
 ## System Architecture
 

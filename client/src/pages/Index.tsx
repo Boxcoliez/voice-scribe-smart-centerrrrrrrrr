@@ -98,6 +98,28 @@ const Index = () => {
                 apiProvider={apiProvider}
               />
             </div>
+
+            {/* OpenAI Rate Limit Information */}
+            {apiProvider === "openai" && apiKey && (
+              <div className="animate-fade-in p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg mt-1">
+                    <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-1">
+                      หมายเหตุเกี่ยวกับ OpenAI API
+                    </h3>
+                    <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                      <p>• หากได้รับข้อผิดพลาด "rate limit exceeded" แสดงว่าใช้งานเกินโควต้า</p>
+                      <p>• กรุณารอสักครู่ (1-2 นาที) แล้วลองใหม่</p>
+                      <p>• ขนาดไฟล์เสียงต้องไม่เกิน 25MB</p>
+                      <p>• รองรับไฟล์: MP3, WAV, M4A</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Results */}

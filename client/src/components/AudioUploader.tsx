@@ -133,20 +133,42 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
     formData.append('file', file);
     formData.append('model', 'whisper-1');
 
-    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: formData,
-    });
+    try {
+      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: formData,
+      });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 429) {
+          throw new Error('OpenAI API rate limit exceeded - กรุณารอสักครู่แล้วลองใหม่');
+        } else if (response.status === 401) {
+          throw new Error('OpenAI API Key ไม่ถูกต้อง - กรุณาตรวจสอบ API Key');
+        } else if (response.status === 413) {
+          throw new Error('ไฟล์เสียงใหญ่เกินไป - กรุณาใช้ไฟล์ที่เล็กกว่า 25MB');
+        } else {
+          throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+      }
+
+      const result = await response.json();
+      
+      if (!result.text) {
+        throw new Error('ไม่สามารถถอดข้อความจากไฟล์เสียงได้');
+      }
+      
+      return result.text;
+    } catch (error: any) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('ไม่สามารถเชื่อมต่อกับ OpenAI ได้ - กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+      }
+      throw error;
     }
-
-    const result = await response.json();
-    return result.text;
   };
 
   const transcribeWithGemini = async (file: File): Promise<string> => {
@@ -196,9 +218,18 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
         audioUrl: audioUrl || '',
         duration: audioDuration
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Transcription error:', error);
-      throw new Error(`ไม่สามารถแปลงไฟล์เสียงด้วย ${apiProvider === "gemini" ? "Gemini" : "OpenAI"} ได้: ${error}`);
+      
+      let errorMessage = 'ไม่สามารถแปลงไฟล์เสียงได้';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      throw new Error(errorMessage);
     }
   };
 
@@ -247,12 +278,16 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
         });
       }, 800);
 
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Transcription error:', error);
       setIsProcessing(false);
       setProgress(0);
+      
+      const errorMessage = error?.message || 'ไม่สามารถแปลงไฟล์เสียงได้ กรุณาลองใหม่อีกครั้ง';
+      
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถแปลงไฟล์เสียงได้ กรุณาลองใหม่อีกครั้ง",
+        description: errorMessage,
         variant: "destructive",
       });
     }
