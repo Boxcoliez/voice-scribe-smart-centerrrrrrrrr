@@ -43,8 +43,8 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
   const validateFile = (file: File): boolean => {
     if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a)$/i)) {
       toast({
-        title: "ไฟล์ไม่รองรับ",
-        description: "กรุณาใช้ไฟล์ .mp3, .wav หรือ .m4a เท่านั้น",
+        title: "Unsupported File Type",
+        description: "Please use .mp3, .wav, or .m4a files only",
         variant: "destructive",
       });
       return false;
@@ -52,8 +52,8 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
 
     if (file.size > maxFileSize) {
       toast({
-        title: "ไฟล์ใหญ่เกินไป",
-        description: "ขนาดไฟล์ต้องไม่เกิน 25MB",
+        title: "File Too Large",
+        description: "File size must not exceed 25MB",
         variant: "destructive",
       });
       return false;
@@ -78,8 +78,8 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
       });
 
       toast({
-        title: "ไฟล์เสียงพร้อมแล้ว! 🎵",
-        description: `เลือกไฟล์ ${file.name} แล้ว กดปุ่มเพื่อเริ่มแปลงเป็นข้อความ`,
+        title: "Audio File Ready! 🎵",
+        description: `${file.name} selected. Click the button to start transcription`,
       });
     }
   };

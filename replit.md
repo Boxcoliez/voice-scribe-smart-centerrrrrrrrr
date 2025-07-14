@@ -11,14 +11,28 @@ UI Language: Thai/English bilingual interface preferred.
 
 ## Recent Issues & Solutions
 
-### Hybrid Transcription Architecture (Latest)
+### English Interface Conversion (Latest - 2025-01-14)
+- Converted entire application interface from Thai to professional English
+- Enhanced luxurious, professional design throughout
+- Completely rebuilt history page with advanced filtering system
+- Added selection functionality (individual select, select all, bulk operations)
+- Implemented advanced search capabilities by filename and content
+- Added language-based filtering with automatic detection
+- Implemented comprehensive date range filtering options
+
+### API Connection Issues
+- Updated Gemini API validation to use correct endpoints
+- Fixed model name compatibility issues with Google AI Studio keys
+- Improved error handling for API key validation
+
+### Hybrid Transcription Architecture
 - Implemented hybrid approach: Whisper for audio transcription + Gemini for text processing
 - Users only need Gemini API keys, system uses Whisper internally
 - Creates illusion that Gemini is performing transcription while it processes text output
 - Maintains luxurious UI with seamless user experience
 
 ### Previous Issues
-- OpenAI API Rate Limiting: Added comprehensive error handling with Thai error messages
+- OpenAI API Rate Limiting: Added comprehensive error handling
 - File size limit: 25MB maximum for audio files
 
 ## System Architecture
