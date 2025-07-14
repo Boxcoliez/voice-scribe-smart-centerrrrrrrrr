@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { History, Eye, Copy, Download, Trash2, AlertTriangle } from "lucide-react";
+import { History, Eye, Copy, Download, Trash2, AlertTriangle, Clock, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult } from "./AudioUploader";
 
@@ -49,7 +49,7 @@ export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProp
     try {
       await navigator.clipboard.writeText(text);
       toast({
-        title: "คัดลอกแล้ว",
+        title: "คัดลอกแล้ว! 📋",
         description: "คัดลอกข้อความไปยังคลิปบอร์ดเรียบร้อยแล้ว",
       });
     } catch (error) {
@@ -71,7 +71,7 @@ export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProp
     document.body.removeChild(element);
     
     toast({
-      title: "ดาวน์โหลดแล้ว",
+      title: "ดาวน์โหลดแล้ว! 📁",
       description: "ไฟล์ข้อความถูกดาวน์โหลดเรียบร้อยแล้ว",
     });
   };
@@ -84,7 +84,7 @@ export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProp
     });
     
     toast({
-      title: "ลบแล้ว",
+      title: "ลบแล้ว! 🗑️",
       description: "ลบรายการจากประวัติเรียบร้อยแล้ว",
     });
   };
@@ -93,47 +93,58 @@ export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProp
     setHistory([]);
     localStorage.removeItem('transcription-history');
     toast({
-      title: "ล้างประวัติแล้ว",
+      title: "ล้างประวัติแล้ว! 🧹",
       description: "ลบประวัติทั้งหมดเรียบร้อยแล้ว",
     });
   };
 
-  const truncateText = (text: string, maxLength: number = 100) => {
+  const truncateText = (text: string, maxLength: number = 120) => {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
+  const getLanguageColor = (language?: string) => {
+    switch (language) {
+      case 'ไทย': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'English': return 'bg-green-100 text-green-800 border-green-200';
+      case '日本語': return 'bg-purple-100 text-purple-800 border-purple-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   return (
-    <Card className="w-full shadow-custom-sm">
-      <CardHeader>
+    <Card className="w-full shadow-custom-lg border-2 border-primary/20">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <History className="h-5 w-5 text-primary" />
-              ประวัติการใช้งาน
-            </CardTitle>
-            <CardDescription>
-              รายการ transcription ทั้งหมด ({history.length} รายการ)
-            </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-primary rounded-lg shadow-custom-sm">
+              <History className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">ประวัติการใช้งาน</CardTitle>
+              <CardDescription className="text-base">
+                รายการ transcription ทั้งหมด ({history.length} รายการ)
+              </CardDescription>
+            </div>
           </div>
           {history.length > 0 && (
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Trash2 className="h-4 w-4 mr-1" />
+                <Button variant="outline" size="sm" className="hover:bg-destructive/10 border-destructive/30">
+                  <Trash2 className="h-4 w-4 mr-2" />
                   ล้างทั้งหมด
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5 text-warning" />
                     ยืนยันการลบ
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription className="text-base">
                     คุณต้องการลบประวัติการใช้งานทั้งหมดหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้
                   </DialogDescription>
                 </DialogHeader>
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-3 justify-end pt-4">
                   <Button variant="outline" size="sm">
                     ยกเลิก
                   </Button>
@@ -153,98 +164,127 @@ export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProp
       
       <CardContent>
         {history.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <History className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>ยังไม่มีประวัติการใช้งาน</p>
-            <p className="text-sm">เริ่มต้นด้วยการอัปโหลดไฟล์เสียงเพื่อสร้างประวัติแรก</p>
+          <div className="text-center py-12 space-y-4">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-muted to-muted/50 rounded-full flex items-center justify-center">
+              <History className="h-10 w-10 text-muted-foreground opacity-50" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-lg font-medium text-muted-foreground">ยังไม่มีประวัติการใช้งาน</p>
+              <p className="text-muted-foreground">เริ่มต้นด้วยการอัปโหลดไฟล์เสียงเพื่อสร้างประวัติแรก</p>
+            </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            {history.map((item) => (
+          <div className="space-y-4">
+            {history.map((item, index) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                className={`group relative p-5 border-2 rounded-xl transition-all duration-200 hover:shadow-custom-md ${
+                  index === 0 ? 'border-success/30 bg-gradient-to-r from-success/5 to-primary/5' : 'border-border hover:border-primary/30 hover:bg-primary/5'
+                }`}
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium text-sm truncate">{item.fileName}</p>
-                    {item.language && (
-                      <Badge variant="secondary" className="text-xs">
-                        {item.language}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {item.timestamp.toLocaleString('th-TH')}
-                  </p>
-                  <p className="text-sm text-foreground">
-                    {truncateText(item.text)}
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-1 ml-4">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>ผลลัพธ์ Transcription</DialogTitle>
-                        <DialogDescription>
-                          {item.fileName} • {item.timestamp.toLocaleString('th-TH')}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <Textarea
-                        value={item.text}
-                        readOnly
-                        className="min-h-[200px] resize-none"
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          onClick={() => copyToClipboard(item.text)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Copy className="h-4 w-4 mr-1" />
-                          คัดลอก
-                        </Button>
-                        <Button
-                          onClick={() => downloadAsText(item)}
-                          size="sm"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          ดาวน์โหลด
-                        </Button>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0 space-y-3">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <p className="font-semibold text-base truncate">{item.fileName}</p>
                       </div>
-                    </DialogContent>
-                  </Dialog>
+                      {item.language && (
+                        <Badge className={`text-xs font-medium border ${getLanguageColor(item.language)}`}>
+                          {item.language}
+                        </Badge>
+                      )}
+                      {index === 0 && (
+                        <Badge className="bg-success/20 text-success border-success/30 text-xs">
+                          ล่าสุด
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>{item.timestamp.toLocaleString('th-TH')}</span>
+                      <span>•</span>
+                      <span>{item.text.split(' ').length} คำ</span>
+                    </div>
+                    
+                    <p className="text-foreground leading-relaxed">
+                      {truncateText(item.text)}
+                    </p>
+                  </div>
                   
-                  <Button
-                    onClick={() => copyToClipboard(item.text)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    onClick={() => downloadAsText(item)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    onClick={() => deleteItem(item.id)}
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="hover:bg-primary/10">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            <FileText className="h-5 w-5" />
+                            ผลลัพธ์ Transcription
+                          </DialogTitle>
+                          <DialogDescription className="text-base">
+                            {item.fileName} • {item.timestamp.toLocaleString('th-TH')}
+                            {item.language && ` • ${item.language}`}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Textarea
+                            value={item.text}
+                            readOnly
+                            className="min-h-[250px] resize-none text-base leading-relaxed"
+                          />
+                          <div className="flex gap-3 justify-end">
+                            <Button
+                              onClick={() => copyToClipboard(item.text)}
+                              variant="outline"
+                              size="sm"
+                            >
+                              <Copy className="h-4 w-4 mr-2" />
+                              คัดลอก
+                            </Button>
+                            <Button
+                              onClick={() => downloadAsText(item)}
+                              size="sm"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              ดาวน์โหลด
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    
+                    <Button
+                      onClick={() => copyToClipboard(item.text)}
+                      variant="outline"
+                      size="sm"
+                      className="hover:bg-primary/10"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    
+                    <Button
+                      onClick={() => downloadAsText(item)}
+                      variant="outline"
+                      size="sm"
+                      className="hover:bg-primary/10"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    
+                    <Button
+                      onClick={() => deleteItem(item.id)}
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, Download, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Copy, Download, Check, FileText, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult as TranscriptionResultType } from "./AudioUploader";
 
@@ -16,16 +17,22 @@ export const TranscriptionResult = ({ result }: TranscriptionResultProps) => {
 
   if (!result) {
     return (
-      <Card className="w-full shadow-custom-sm border-muted">
-        <CardHeader>
-          <CardTitle className="text-muted-foreground">ผลลัพธ์ Transcription</CardTitle>
-          <CardDescription>
-            ข้อความที่แปลงได้จะแสดงที่นี่
+      <Card className="w-full shadow-custom-lg border-2 border-dashed border-muted">
+        <CardHeader className="text-center py-8">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-muted to-muted/50 rounded-full flex items-center justify-center mb-4">
+            <FileText className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <CardTitle className="text-muted-foreground text-xl">ผลลัพธ์ Transcription</CardTitle>
+          <CardDescription className="text-base">
+            ข้อความที่แปลงได้จะแสดงที่นี่หลังจากการประมวลผลเสร็จสิ้น
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-32 flex items-center justify-center text-muted-foreground border-2 border-dashed border-muted rounded-lg">
-            ยังไม่มีการแปลงไฟล์เสียง
+          <div className="h-32 flex items-center justify-center text-muted-foreground border-2 border-dashed border-muted rounded-xl bg-muted/20">
+            <div className="text-center space-y-2">
+              <Sparkles className="h-8 w-8 mx-auto opacity-50" />
+              <p className="text-lg">รอการอัปโหลดไฟล์เสียง</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -37,7 +44,7 @@ export const TranscriptionResult = ({ result }: TranscriptionResultProps) => {
       await navigator.clipboard.writeText(result.text);
       setCopied(true);
       toast({
-        title: "คัดลอกแล้ว",
+        title: "คัดลอกแล้ว! 📋",
         description: "คัดลอกข้อความไปยังคลิปบอร์ดเรียบร้อยแล้ว",
       });
       setTimeout(() => setCopied(false), 2000);
@@ -60,56 +67,89 @@ export const TranscriptionResult = ({ result }: TranscriptionResultProps) => {
     document.body.removeChild(element);
     
     toast({
-      title: "ดาวน์โหลดแล้ว",
+      title: "ดาวน์โหลดแล้ว! 📁",
       description: "ไฟล์ข้อความถูกดาวน์โหลดเรียบร้อยแล้ว",
     });
   };
 
   return (
-    <Card className="w-full shadow-custom-sm animate-fade-in">
-      <CardHeader>
-        <CardTitle className="text-success">ผลลัพธ์ Transcription</CardTitle>
-        <CardDescription>
-          แปลงจากไฟล์: {result.fileName} • {result.timestamp.toLocaleString('th-TH')}
-          {result.language && ` • ภาษา: ${result.language}`}
+    <Card className="w-full shadow-custom-lg animate-fade-in border-2 border-success/30 bg-gradient-to-br from-success/5 to-primary/5">
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-gradient-to-r from-success to-success/80 rounded-lg shadow-custom-sm">
+            <Check className="h-6 w-6 text-white" />
+          </div>
+          <CardTitle className="text-success text-xl">ผลลัพธ์ Transcription</CardTitle>
+          {result.language && (
+            <Badge variant="secondary" className="bg-gradient-accent text-accent-foreground font-semibold px-3 py-1">
+              {result.language}
+            </Badge>
+          )}
+        </div>
+        <CardDescription className="text-base">
+          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+            <span>📁 {result.fileName}</span>
+            <span>•</span>
+            <span>🕒 {result.timestamp.toLocaleString('th-TH')}</span>
+          </div>
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Textarea
-          value={result.text}
-          readOnly
-          className="min-h-[120px] resize-none font-medium"
-          placeholder="ข้อความที่แปลงได้จะแสดงที่นี่..."
-        />
+      
+      <CardContent className="space-y-6">
+        <div className="relative">
+          <Textarea
+            value={result.text}
+            readOnly
+            className="min-h-[150px] resize-none font-medium text-base leading-relaxed bg-background/50 border-2 border-primary/20 focus:border-primary/40 rounded-xl p-4"
+            placeholder="ข้อความที่แปลงได้จะแสดงที่นี่..."
+          />
+          <div className="absolute top-3 right-3">
+            <Badge variant="outline" className="bg-background/80 backdrop-blur-sm">
+              {result.text.length} ตัวอักษร
+            </Badge>
+          </div>
+        </div>
         
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-3 justify-center">
           <Button
             onClick={copyToClipboard}
             variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
+            size="lg"
+            className="flex items-center gap-3 px-6 py-3 hover:bg-primary/10 border-2 border-primary/20 hover:border-primary/40 transition-all duration-200"
           >
             {copied ? (
               <>
-                <Check className="h-4 w-4 text-success" />
-                คัดลอกแล้ว
+                <Check className="h-5 w-5 text-success" />
+                <span className="font-semibold">คัดลอกแล้ว</span>
               </>
             ) : (
               <>
-                <Copy className="h-4 w-4" />
-                คัดลอก
+                <Copy className="h-5 w-5" />
+                <span className="font-semibold">คัดลอกข้อความ</span>
               </>
             )}
           </Button>
           
           <Button
             onClick={downloadAsText}
-            size="sm"
-            className="flex items-center gap-2"
+            size="lg"
+            className="bg-gradient-primary hover:opacity-90 text-white font-semibold px-6 py-3 shadow-custom-md transition-all duration-200 hover:scale-105"
           >
-            <Download className="h-4 w-4" />
-            Download .txt
+            <Download className="h-5 w-5 mr-2" />
+            ดาวน์โหลด .txt
           </Button>
+        </div>
+
+        {/* แสดงข้อมูลเพิ่มเติม */}
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
+          <div className="text-center p-3 bg-background/50 rounded-lg">
+            <p className="text-sm text-muted-foreground">จำนวนคำ</p>
+            <p className="text-lg font-bold text-primary">{result.text.split(' ').length}</p>
+          </div>
+          <div className="text-center p-3 bg-background/50 rounded-lg">
+            <p className="text-sm text-muted-foreground">ภาษาที่ตรวจพบ</p>
+            <p className="text-lg font-bold text-primary">{result.language || 'ไม่ระบุ'}</p>
+          </div>
         </div>
       </CardContent>
     </Card>
