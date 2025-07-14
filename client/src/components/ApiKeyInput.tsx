@@ -64,7 +64,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
       } else {
         toast({
           title: "Invalid API Key",
-          description: "Please check your API Key and try again",
+          description: "Please check your Gemini API Key and try again",
           variant: "destructive",
         });
       }
@@ -95,7 +95,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
           <div className="p-2 gradient-primary rounded-lg">
             <Key className="h-5 w-5 text-white" />
           </div>
-          API Configuration
+          Gemini API Configuration
         </CardTitle>
         <CardDescription className="text-base">
           Enter your Google Gemini API Key to enable audio transcription
@@ -160,7 +160,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
           <div className="flex items-center gap-3 p-4 bg-success/10 text-success rounded-lg border border-success/20">
             <Check className="h-5 w-5" />
             <div>
-              <div className="font-medium">API Key Active</div>
+              <div className="font-medium">Gemini API Key Active</div>
               <div className="text-sm opacity-80">Ready for audio transcription</div>
             </div>
           </div>
@@ -169,7 +169,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
             <AlertCircle className="h-5 w-5" />
             <div>
               <div className="font-medium">API Key Required</div>
-              <div className="text-sm opacity-80">Please enter your API Key to continue</div>
+              <div className="text-sm opacity-80">Please enter your Gemini API Key to continue</div>
             </div>
           </div>
         )}

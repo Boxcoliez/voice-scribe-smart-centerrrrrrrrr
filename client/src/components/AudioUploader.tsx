@@ -34,7 +34,7 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
   const { toast } = useToast();
 
   const allowedTypes = ['audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mpeg', 'audio/m4a', 'audio/x-m4a'];
-  const maxFileSize = 25 * 1024 * 1024; // 25MB
+  const maxFileSize = 20 * 1024 * 1024; // 20MB (Gemini limit)
 
   const validateFile = (file: File): boolean => {
     if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a)$/i)) {
@@ -49,7 +49,7 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
     if (file.size > maxFileSize) {
       toast({
         title: "File Too Large",
-        description: "File size must not exceed 25MB",
+        description: "File size must not exceed 20MB for Gemini API",
         variant: "destructive",
       });
       return false;
@@ -120,81 +120,31 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
     }
   };
 
-  const transcribeWithWhisper = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('model', 'whisper-1');
-
-    try {
-      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY || ''}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        
-        if (response.status === 429) {
-          throw new Error('Whisper API rate limit exceeded - Please wait a moment and try again');
-        } else if (response.status === 401) {
-          throw new Error('Unable to access Whisper API - Please try again');
-        } else if (response.status === 413) {
-          throw new Error('Audio file too large - Please use a file smaller than 25MB');
-        } else {
-          throw new Error(`Whisper API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
-        }
-      }
-
-      const result = await response.json();
-      
-      if (!result.text) {
-        throw new Error('Unable to transcribe audio file');
-      }
-      
-      return result.text;
-    } catch (error: any) {
-      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        throw new Error('Unable to connect to Whisper API - Please check your internet connection');
-      }
-      throw error;
-    }
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        // Remove the data:audio/xxx;base64, prefix
+        const base64Data = base64.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.onerror = error => reject(error);
+    });
   };
 
-  const processWithGemini = async (text: string): Promise<string> => {
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Please improve and format the following transcribed text for better readability. Add proper punctuation, correct any errors, and organize the text appropriately:
-
-${text}
-
-Please return only the improved text without any explanation or additional content.`
-            }]
-          }]
-        }),
-      });
-
-      if (!response.ok) {
-        console.warn('Gemini processing failed, using original text');
-        return text;
-      }
-
-      const result = await response.json();
-      const processedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-      
-      return processedText || text;
-    } catch (error) {
-      console.warn('Gemini processing failed, using original text:', error);
-      return text;
+  const getMimeType = (file: File): string => {
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'mp3':
+        return 'audio/mp3';
+      case 'wav':
+        return 'audio/wav';
+      case 'm4a':
+        return 'audio/mp4';
+      default:
+        return file.type || 'audio/mp3';
     }
   };
 
@@ -213,26 +163,72 @@ Please return only the improved text without any explanation or additional conte
     return 'English';
   };
 
-  const transcribeAudioFile = async (file: File): Promise<TranscriptionResult> => {
+  const transcribeWithGemini = async (file: File): Promise<TranscriptionResult> => {
     try {
-      setProgress(15);
+      setProgress(20);
       
-      const rawTranscriptionText = await transcribeWithWhisper(file);
+      // Convert file to base64
+      const base64Data = await convertFileToBase64(file);
+      const mimeType = getMimeType(file);
       
-      setProgress(50);
-      
-      const processedText = await processWithGemini(rawTranscriptionText);
-      
+      setProgress(40);
+
+      // Call Gemini API with audio file
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              {
+                text: "Please transcribe this audio file to text. Provide only the transcribed text without any additional explanation or formatting."
+              },
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: base64Data
+                }
+              }
+            ]
+          }]
+        }),
+      });
+
       setProgress(70);
-      
-      const detectedLanguage = detectLanguage(processedText);
-      
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 429) {
+          throw new Error('Gemini API rate limit exceeded - Please wait a moment and try again');
+        } else if (response.status === 401) {
+          throw new Error('Invalid API Key - Please check your Gemini API Key');
+        } else if (response.status === 413) {
+          throw new Error('Audio file too large - Please use a file smaller than 20MB');
+        } else {
+          throw new Error(`Gemini API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+      }
+
+      const result = await response.json();
       setProgress(90);
+      
+      const transcribedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (!transcribedText) {
+        throw new Error('Unable to transcribe audio file - No text returned from Gemini');
+      }
+
+      const detectedLanguage = detectLanguage(transcribedText);
+      
+      setProgress(100);
 
       return {
         id: Math.random().toString(36).substr(2, 9),
         fileName: file.name,
-        text: processedText,
+        text: transcribedText.trim(),
         timestamp: new Date(),
         language: detectedLanguage,
         audioUrl: audioUrl || '',
@@ -260,8 +256,7 @@ Please return only the improved text without any explanation or additional conte
     setProgress(0);
 
     try {
-      const result = await transcribeAudioFile(selectedFile);
-      setProgress(100);
+      const result = await transcribeWithGemini(selectedFile);
 
       setTimeout(() => {
         onTranscriptionResult(result);
@@ -275,7 +270,7 @@ Please return only the improved text without any explanation or additional conte
           title: "Transcription Complete",
           description: `Successfully transcribed ${selectedFile.name}`,
         });
-      }, 800);
+      }, 500);
 
     } catch (error: any) {
       console.error('Transcription error:', error);
@@ -323,7 +318,7 @@ Please return only the improved text without any explanation or additional conte
           Audio Upload
         </CardTitle>
         <CardDescription className="text-base">
-          Upload audio files (.mp3, .wav, .m4a) up to 25MB for transcription
+          Upload audio files (.mp3, .wav, .m4a) up to 20MB for Gemini AI transcription
         </CardDescription>
       </CardHeader>
       
@@ -434,7 +429,7 @@ Please return only the improved text without any explanation or additional conte
               <div className="flex-1">
                 <p className="font-semibold text-lg">Processing: {selectedFile?.name}</p>
                 <p className="text-muted-foreground text-base">
-                  Using Whisper + Gemini AI for high-quality transcription...
+                  Using Gemini AI for audio transcription...
                 </p>
               </div>
             </div>
@@ -446,9 +441,9 @@ Please return only the improved text without any explanation or additional conte
               </div>
               <Progress value={progress} className="h-3 bg-secondary" />
               <div className="text-center text-sm text-muted-foreground">
-                {progress < 30 && "Transcribing audio with Whisper AI..."}
-                {progress >= 30 && progress < 60 && "Enhancing text with Gemini AI..."}
-                {progress >= 60 && progress < 90 && "Detecting language and formatting..."}
+                {progress < 30 && "Preparing audio file..."}
+                {progress >= 30 && progress < 60 && "Uploading to Gemini AI..."}
+                {progress >= 60 && progress < 90 && "Transcribing audio with Gemini..."}
                 {progress >= 90 && "Finalizing transcription..."}
               </div>
             </div>
