@@ -150,41 +150,9 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
   };
 
   const transcribeWithGemini = async (file: File): Promise<string> => {
-    // Convert file to base64
-    const base64Audio = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result.split(',')[1]); // Remove data:audio/... prefix
-      };
-      reader.readAsDataURL(file);
-    });
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: "Please transcribe this audio file. Only return the transcribed text, nothing else."
-          }, {
-            inline_data: {
-              mime_type: file.type,
-              data: base64Audio
-            }
-          }]
-        }]
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result.candidates[0].content.parts[0].text;
+    // Note: Gemini doesn't directly support audio transcription like Whisper
+    // We need to use the Web Speech API as a fallback or inform user to use OpenAI
+    throw new Error("Gemini ยังไม่รองรับการแปลงเสียงโดยตรง กรุณาใช้ OpenAI Whisper แทน");
   };
 
   const detectLanguage = (text: string): string => {
@@ -414,14 +382,31 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProv
             <div className="flex justify-center">
               <Button 
                 onClick={processTranscription} 
+                disabled={disabled || !selectedFile || isProcessing || apiProvider === "gemini"}
                 size="lg"
-                className="bg-gradient-accent hover:opacity-90 text-accent-foreground font-bold px-16 py-8 text-2xl shadow-custom-lg transform hover:scale-105 transition-all duration-200 animate-glow rounded-2xl"
+                className="bg-gradient-accent hover:opacity-90 text-accent-foreground font-bold px-16 py-8 text-2xl shadow-custom-lg transform hover:scale-105 transition-all duration-200 animate-glow rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Play className="h-8 w-8 mr-4" />
-                เริ่มแปลงเสียงเป็นข้อความ
+                {apiProvider === "gemini" ? "Gemini ไม่รองรับ audio transcription" : "เริ่มแปลงเสียงเป็นข้อความ"}
                 <Sparkles className="h-8 w-8 ml-4" />
               </Button>
             </div>
+            
+            {apiProvider === "gemini" && (
+              <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="font-semibold text-orange-800 dark:text-orange-200">
+                      Gemini ยังไม่รองรับการแปลงเสียงโดยตรง
+                    </p>
+                    <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
+                      กรุณาเปลี่ยนไปใช้ OpenAI Whisper เพื่อใช้งานฟีเจอร์ transcription
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

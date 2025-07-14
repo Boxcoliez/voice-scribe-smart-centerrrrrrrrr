@@ -30,10 +30,18 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange, apiProvider, onProviderCha
         });
         return response.ok;
       } else if (provider === "gemini") {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${key}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: "Test connection"
+              }]
+            }]
+          }),
         });
         return response.ok;
       }
@@ -95,10 +103,10 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange, apiProvider, onProviderCha
     if (apiProvider === "gemini") {
       return {
         name: "Google Gemini",
-        icon: <Sparkles className="h-5 w-5 text-blue-600" />,
+        icon: <Sparkles className="h-5 w-5 text-orange-600" />,
         placeholder: "AIzaSy...",
-        description: "ใส่ Gemini API Key เพื่อใช้งาน Google AI transcription",
-        keyGuide: "รับ API Key ฟรีจาก Google AI Studio"
+        description: "⚠️ Gemini ยังไม่รองรับการแปลงเสียงโดยตรง กรุณาใช้ OpenAI",
+        keyGuide: "หมายเหตุ: สำหรับ transcription ให้ใช้ OpenAI Whisper แทน"
       };
     } else {
       return {
@@ -138,7 +146,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange, apiProvider, onProviderCha
                   <Sparkles className="h-5 w-5 text-blue-600" />
                   <div>
                     <div className="font-semibold">Google Gemini</div>
-                    <div className="text-sm text-muted-foreground">Free tier available</div>
+                    <div className="text-sm text-orange-600">ยังไม่รองรับ audio transcription</div>
                   </div>
                 </div>
               </SelectItem>
