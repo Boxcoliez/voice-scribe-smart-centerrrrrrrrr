@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 interface AudioUploaderProps {
   disabled: boolean;
   onTranscriptionResult: (result: TranscriptionResult) => void;
-  apiKey?: string; // Made optional since we're using server-side API
+  apiKey: string;
+  apiProvider: "openai" | "gemini";
 }
 
 export interface TranscriptionResult {
@@ -23,7 +24,7 @@ export interface TranscriptionResult {
   duration?: number;
 }
 
-export const AudioUploader = ({ disabled, onTranscriptionResult }: AudioUploaderProps) => {
+export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey, apiProvider }: AudioUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -127,32 +128,109 @@ export const AudioUploader = ({ disabled, onTranscriptionResult }: AudioUploader
     }
   };
 
-  // Real transcription using OpenAI API
+  const transcribeWithOpenAI = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('model', 'whisper-1');
+
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.text;
+  };
+
+  const transcribeWithGemini = async (file: File): Promise<string> => {
+    // Convert file to base64
+    const base64Audio = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1]); // Remove data:audio/... prefix
+      };
+      reader.readAsDataURL(file);
+    });
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: "Please transcribe this audio file. Only return the transcribed text, nothing else."
+          }, {
+            inline_data: {
+              mime_type: file.type,
+              data: base64Audio
+            }
+          }]
+        }]
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.candidates[0].content.parts[0].text;
+  };
+
+  const detectLanguage = (text: string): string => {
+    // Simple language detection based on character patterns
+    const thaiPattern = /[\u0E00-\u0E7F]/;
+    const japanesePattern = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
+    const chinesePattern = /[\u4E00-\u9FFF]/;
+    
+    if (thaiPattern.test(text)) return 'ไทย';
+    if (japanesePattern.test(text)) return '日本語';
+    if (chinesePattern.test(text)) return '中文';
+    return 'English';
+  };
+
   const transcribeAudioFile = async (file: File): Promise<TranscriptionResult> => {
     try {
-      const result = await uploadFile('/api/transcribe', file, (progress) => {
-        setProgress(progress);
-      });
+      let transcriptionText: string;
+      setProgress(20);
 
-      setDetectedLanguage(result.language);
+      if (apiProvider === "openai") {
+        transcriptionText = await transcribeWithOpenAI(file);
+      } else {
+        transcriptionText = await transcribeWithGemini(file);
+      }
+
+      setProgress(80);
+      const detectedLanguage = detectLanguage(transcriptionText);
+      setDetectedLanguage(detectedLanguage);
       
       toast({
         title: "แปลงเสียงสำเร็จ! ✨",
-        description: `ตรวจพบภาษา: ${getLanguageName(result.language)}`,
+        description: `ตรวจพบภาษา: ${detectedLanguage} ด้วย ${apiProvider === "gemini" ? "Gemini" : "OpenAI"}`,
       });
 
       return {
-        id: result.id,
-        fileName: result.fileName,
-        text: result.text,
-        timestamp: new Date(result.timestamp),
-        language: result.language,
+        id: Math.random().toString(36).substr(2, 9),
+        fileName: file.name,
+        text: transcriptionText,
+        timestamp: new Date(),
+        language: detectedLanguage,
         audioUrl: audioUrl || '',
-        duration: result.duration || audioDuration
+        duration: audioDuration
       };
     } catch (error) {
       console.error('Transcription error:', error);
-      throw error;
+      throw new Error(`ไม่สามารถแปลงไฟล์เสียงด้วย ${apiProvider === "gemini" ? "Gemini" : "OpenAI"} ได้: ${error}`);
     }
   };
 

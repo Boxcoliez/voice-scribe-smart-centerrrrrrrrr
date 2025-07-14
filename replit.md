@@ -42,20 +42,26 @@ The application follows a monorepo structure with clear separation between clien
 - Migrations are managed through Drizzle Kit
 
 ### Key Application Features
-- **Audio Transcription**: Core functionality for uploading and processing audio files
-- **API Key Management**: Component for managing transcription service API keys
+- **Client-side Audio Transcription**: Direct API integration with OpenAI Whisper and Google Gemini
+- **Multi-Provider Support**: Users can choose between OpenAI and Gemini with their own API keys
+- **API Key Validation**: Real-time validation of API keys before use
+- **Automatic Language Detection**: Intelligent detection of Thai, English, Japanese, Chinese, and more
+- **Audio Playback**: Built-in audio player for uploaded files and transcription history
 - **Theme Support**: Dark/light mode toggle with persistent preferences
-- **File Upload**: Drag-and-drop audio file upload with validation
-- **Transcription History**: Local storage-based history tracking
+- **File Upload**: Drag-and-drop audio file upload with validation (MP3, WAV, M4A)
+- **Transcription History**: Local storage-based history tracking with audio playback
 - **Real-time Progress**: Progress indicators for transcription processing
+- **Luxurious UI**: Premium styling with gradients, animations, and Thai/English interface
 
 ## Data Flow
 
-1. **User Authentication**: Basic user system with username/password storage
-2. **File Upload**: Audio files are validated client-side and processed
-3. **API Integration**: External transcription service integration via API keys
-4. **Result Storage**: Transcription results stored locally with history tracking
-5. **State Management**: TanStack Query manages server state and caching
+1. **API Configuration**: Users select provider (OpenAI/Gemini) and validate their API keys
+2. **File Upload**: Audio files are validated client-side for type and size restrictions
+3. **Client-side Transcription**: Direct API calls to OpenAI Whisper or Google Gemini APIs
+4. **Language Detection**: Automatic detection of spoken language using pattern matching
+5. **Audio Processing**: File conversion to playable URLs with duration calculation
+6. **Result Storage**: Transcription results stored locally with history tracking
+7. **State Management**: React state management for real-time UI updates
 
 ## External Dependencies
 
@@ -75,7 +81,9 @@ The application follows a monorepo structure with clear separation between clien
 - Drizzle Kit for migrations
 
 ### External Services
-- Audio transcription API (configurable via API key)
+- OpenAI Whisper API for high-accuracy audio transcription
+- Google Gemini API for alternative transcription with multimodal capabilities
+- Client-side integration without server-side API key storage
 - Replit-specific development tools and banner
 
 ## Deployment Strategy
