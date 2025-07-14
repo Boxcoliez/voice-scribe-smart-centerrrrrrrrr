@@ -46,8 +46,8 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
   const handleSaveApiKey = async () => {
     if (!tempApiKey.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter your API Key",
+        title: "Missing API Key",
+        description: "Please enter your Gemini API Key",
         variant: "destructive",
       });
       return;
@@ -66,15 +66,15 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
         });
       } else {
         toast({
-          title: "API Key ไม่ถูกต้อง",
-          description: "ไม่สามารถเชื่อมต่อกับ Gemini API ได้ กรุณาตรวจสอบว่า API Key ถูกต้องและเปิดใช้งาน Gemini API แล้ว",
+          title: "Invalid API Key",
+          description: "Unable to connect to Gemini API. Please check that your API Key is correct and Gemini API is enabled",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถตรวจสอบ API Key ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต",
+        title: "Validation Error",
+        description: "Unable to validate API Key. Please check your internet connection",
         variant: "destructive",
       });
     } finally {
@@ -95,8 +95,8 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
     name: "Google Gemini",
     icon: <Sparkles className="h-5 w-5 text-blue-600" />,
     placeholder: "AIzaSy...",
-    description: "ใส่ Gemini API Key สำหรับแปลงเสียงเป็นข้อความ (ระบบใช้ Whisper + Gemini โดยอัตโนมัติ)",
-    keyGuide: "รับ API Key ฟรีจาก Google AI Studio (aistudio.google.com)"
+    description: "Enter Gemini API Key for audio transcription (System uses Whisper + Gemini automatically)",
+    keyGuide: "Get your free API Key from Google AI Studio (aistudio.google.com)"
   };
 
   return (
@@ -107,7 +107,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
           API Configuration
         </CardTitle>
         <CardDescription className="text-base">
-          ใส่ Gemini API Key ของคุณเพื่อเริ่มใช้งานระบบแปลงเสียงเป็นข้อความ
+          Enter your Gemini API Key to begin using the audio transcription service
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -125,7 +125,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
               <Input
                 id="apiKey"
                 type="password"
-                placeholder={`ใส่ ${providerInfo.name} API Key... (${providerInfo.placeholder})`}
+                placeholder={`Enter ${providerInfo.name} API Key... (${providerInfo.placeholder})`}
                 value={tempApiKey}
                 onChange={(e) => setTempApiKey(e.target.value)}
                 className="font-mono text-lg h-12 border-2 border-primary/20 focus:border-primary/40"
@@ -138,7 +138,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
                   className="shrink-0 h-12 px-4 border-2 border-red-200 text-red-600 hover:bg-red-50"
                 >
                   <AlertCircle className="h-5 w-5 mr-2" />
-                  ลบ
+                  Remove
                 </Button>
               ) : (
                 <Button 
@@ -150,12 +150,12 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
                   {isValidating ? (
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      กำลังตรวจสอบ...
+                      Validating...
                     </div>
                   ) : (
                     <>
                       <Check className="h-5 w-5 mr-2" />
-                      ตรวจสอบ & บันทึก
+                      Validate & Save
                     </>
                   )}
                 </Button>
@@ -173,8 +173,8 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
           <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-success/20 to-success/10 text-success rounded-xl border-2 border-success/30">
             <Check className="h-6 w-6" />
             <div>
-              <div className="font-semibold text-lg">{providerInfo.name} พร้อมใช้งาน</div>
-              <div className="text-sm opacity-80">คุณสามารถอัปโหลดไฟล์เสียงได้แล้ว</div>
+              <div className="font-semibold text-lg">{providerInfo.name} Ready</div>
+              <div className="text-sm opacity-80">You can now upload audio files</div>
             </div>
           </div>
         ) : (

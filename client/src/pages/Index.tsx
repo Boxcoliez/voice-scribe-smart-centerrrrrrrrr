@@ -15,30 +15,30 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-violet-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Navigation Header */}
-      <nav className="border-b bg-card/95 backdrop-blur-xl sticky top-0 z-50 shadow-custom-lg">
-        <div className="container mx-auto px-4 py-4">
+      <nav className="border-b border-slate-200/60 dark:border-slate-700/60 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl sticky top-0 z-50 shadow-soft">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-primary rounded-2xl shadow-custom-md">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-violet-500 rounded-2xl shadow-soft">
                 <Mic className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  Smart Transcriber Pro
+                <h1 className="text-3xl font-bold text-gradient-primary">
+                  AI Transcription Studio
                 </h1>
-                <p className="text-muted-foreground font-medium">
-                  Premium Voice2Text Contact Center • AI-Powered
+                <p className="text-slate-600 dark:text-slate-400 font-medium">
+                  Professional Audio-to-Text Service
                 </p>
               </div>
             </div>
             
             <div className="flex items-center gap-4">
               {apiKey && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-success/20 to-success/10 text-success rounded-full border-2 border-success/30 shadow-custom-sm">
+                <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-800/30 text-emerald-700 dark:text-emerald-300 rounded-full border border-emerald-200 dark:border-emerald-700 shadow-soft">
                   <Sparkles className="h-5 w-5" />
-                  <span className="hidden sm:inline font-semibold">{apiProvider === "gemini" ? "Gemini Ready" : "OpenAI Ready"}</span>
+                  <span className="hidden sm:inline font-semibold">Gemini Ready</span>
                 </div>
               )}
               <ThemeToggle />
@@ -48,27 +48,28 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="text-center space-y-4 mb-8">
-          <div className="flex justify-center gap-6 mb-8">
-            <div className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-full border border-blue-200 dark:border-blue-700 shadow-sm">
+      <section className="container mx-auto px-6 py-12">
+        <div className="text-center space-y-6 mb-12 animate-fade-in">
+          <div className="flex justify-center gap-6 mb-10">
+            <div className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/30 rounded-full border border-blue-200 dark:border-blue-700 shadow-soft">
               <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">Lightning Fast</span>
             </div>
-            <div className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-full border border-emerald-200 dark:border-emerald-700 shadow-sm">
+            <div className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-full border border-emerald-200 dark:border-emerald-700 shadow-soft">
               <Shield className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Enterprise Secure</span>
             </div>
-            <div className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-full border border-purple-200 dark:border-purple-700 shadow-sm">
-              <Globe className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <span className="text-sm font-semibold text-purple-800 dark:text-purple-200">Multi-Language</span>
+            <div className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-100 to-violet-50 dark:from-violet-900/30 dark:to-violet-800/30 rounded-full border border-violet-200 dark:border-violet-700 shadow-soft">
+              <Globe className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              <span className="text-sm font-semibold text-violet-800 dark:text-violet-200">Multi-Language</span>
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-white dark:via-slate-200 dark:to-white bg-clip-text text-transparent mb-6">
-            Professional AI Audio Transcription
+          <h1 className="text-5xl md:text-6xl font-bold text-gradient-primary mb-8 leading-tight">
+            Professional Audio Transcription
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Advanced hybrid AI technology featuring automatic language detection, exceptional accuracy, and enterprise-grade processing for professional use
+          <p className="text-xl text-slate-600 dark:text-slate-300 max-w-4xl mx-auto leading-relaxed">
+            Advanced AI-powered speech-to-text service with automatic language detection, 
+            exceptional accuracy, and enterprise-grade processing capabilities
           </p>
         </div>
       </section>
@@ -140,24 +141,24 @@ const Index = () => {
             <div className="w-12 h-12 bg-gradient-primary rounded-xl mx-auto mb-4 flex items-center justify-center">
               <Zap className="h-6 w-6 text-white" />
             </div>
-            <h3 className="font-bold text-lg mb-2">ประมวลผลเร็ว</h3>
-            <p className="text-muted-foreground">แปลงไฟล์เสียงเป็นข้อความภายในไม่กี่วินาที</p>
+            <h3 className="font-bold text-lg mb-2">Fast Processing</h3>
+            <p className="text-muted-foreground">Convert audio files to text within seconds</p>
           </div>
           
           <div className="text-center p-6 bg-card/50 backdrop-blur-sm rounded-2xl border border-success/20 shadow-custom-md">
             <div className="w-12 h-12 bg-gradient-to-r from-success to-success/80 rounded-xl mx-auto mb-4 flex items-center justify-center">
               <Globe className="h-6 w-6 text-white" />
             </div>
-            <h3 className="font-bold text-lg mb-2">รองรับหลายภาษา</h3>
-            <p className="text-muted-foreground">ตรวจจับและแปลงภาษาไทย อังกฤษ และญี่ปุ่นอัตโนมัติ</p>
+            <h3 className="font-bold text-lg mb-2">Multi-Language Support</h3>
+            <p className="text-muted-foreground">Automatic detection and processing of Thai, English, and Japanese</p>
           </div>
           
           <div className="text-center p-6 bg-card/50 backdrop-blur-sm rounded-2xl border border-accent/20 shadow-custom-md">
             <div className="w-12 h-12 bg-gradient-accent rounded-xl mx-auto mb-4 flex items-center justify-center">
               <Shield className="h-6 w-6 text-accent-foreground" />
             </div>
-            <h3 className="font-bold text-lg mb-2">ความปลอดภัยสูง</h3>
-            <p className="text-muted-foreground">ข้อมูลของคุณได้รับการปกป้องด้วยมาตรฐานสูงสุด</p>
+            <h3 className="font-bold text-lg mb-2">Enterprise Security</h3>
+            <p className="text-muted-foreground">Your data is protected with the highest security standards</p>
           </div>
         </div>
       </section>
@@ -170,17 +171,17 @@ const Index = () => {
               <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-white" />
               </div>
-              <span className="font-bold text-lg">Smart Transcriber Pro</span>
+              <span className="font-bold text-lg">AI Transcription Studio</span>
             </div>
             <p className="text-muted-foreground">
               Powered by{" "}
               <span className="font-semibold text-primary">Gemini AI</span>
               {" • "}
-              สร้างโดย{" "}
-              <span className="font-semibold bg-gradient-accent bg-clip-text text-transparent">Smart Transcriber Team</span>
+              Built by{" "}
+              <span className="font-semibold bg-gradient-accent bg-clip-text text-transparent">Professional Development Team</span>
             </p>
             <p className="text-sm text-muted-foreground">
-              รองรับการแปลงเสียงเป็นข้อความในหลายภาษาอัตโนมัติ • ความแม่นยำสูง • ประมวลผลรวดเร็ว
+              Multi-language audio transcription • High accuracy • Lightning fast processing
             </p>
           </div>
         </div>
