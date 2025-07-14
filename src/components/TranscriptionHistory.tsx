@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { History, Eye, Copy, Download, Trash2, AlertTriangle, Clock, FileText } from "lucide-react";
+import { History, Eye, Copy, Download, Trash2, AlertTriangle, Clock, FileText, Play, Pause, Volume2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult } from "./AudioUploader";
 
@@ -14,6 +14,7 @@ interface TranscriptionHistoryProps {
 
 export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProps) => {
   const [history, setHistory] = useState<TranscriptionResult[]>([]);
+  const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Load history from localStorage on component mount
@@ -98,17 +99,43 @@ export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProp
     });
   };
 
+  const toggleAudioPlayback = (audioUrl: string, itemId: string) => {
+    const audio = document.getElementById(`audio-${itemId}`) as HTMLAudioElement;
+    if (!audio) return;
+
+    if (playingAudio === itemId) {
+      audio.pause();
+      setPlayingAudio(null);
+    } else {
+      // หยุดเสียงอื่นที่กำลังเล่นอยู่
+      if (playingAudio) {
+        const currentAudio = document.getElementById(`audio-${playingAudio}`) as HTMLAudioElement;
+        if (currentAudio) {
+          currentAudio.pause();
+        }
+      }
+      audio.play();
+      setPlayingAudio(itemId);
+    }
+  };
+
   const truncateText = (text: string, maxLength: number = 120) => {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
   const getLanguageColor = (language?: string) => {
     switch (language) {
-      case 'ไทย': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'English': return 'bg-green-100 text-green-800 border-green-200';
-      case '日本語': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'ไทย': return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700';
+      case 'English': return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
+      case '日本語': return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-700';
     }
+  };
+
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -165,7 +192,7 @@ export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProp
       <CardContent>
         {history.length === 0 ? (
           <div className="text-center py-12 space-y-4">
-            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-muted to-muted/50 rounded-full flex items-center justify-center">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-muted to-muted/50 rounded-full flex items-center justify-center animate-float">
               <History className="h-10 w-10 text-muted-foreground opacity-50" />
             </div>
             <div className="space-y-2">
@@ -206,7 +233,35 @@ export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProp
                       <span>{item.timestamp.toLocaleString('th-TH')}</span>
                       <span>•</span>
                       <span>{item.text.split(' ').length} คำ</span>
+                      {item.duration && (
+                        <>
+                          <span>•</span>
+                          <span>{formatDuration(item.duration)}</span>
+                        </>
+                      )}
                     </div>
+                    
+                    {/* Audio Player in History */}
+                    {item.audioUrl && (
+                      <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-primary/10">
+                        <Button
+                          onClick={() => toggleAudioPlayback(item.audioUrl!, item.id)}
+                          variant="outline"
+                          size="sm"
+                          className="hover:bg-primary/10"
+                        >
+                          {playingAudio === item.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        </Button>
+                        <Volume2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">ฟังไฟล์เสียงต้นฉบับ</span>
+                        <audio
+                          id={`audio-${item.id}`}
+                          src={item.audioUrl}
+                          onEnded={() => setPlayingAudio(null)}
+                          onPause={() => setPlayingAudio(null)}
+                        />
+                      </div>
+                    )}
                     
                     <p className="text-foreground leading-relaxed">
                       {truncateText(item.text)}
@@ -229,9 +284,32 @@ export const TranscriptionHistory = ({ currentResult }: TranscriptionHistoryProp
                           <DialogDescription className="text-base">
                             {item.fileName} • {item.timestamp.toLocaleString('th-TH')}
                             {item.language && ` • ${item.language}`}
+                            {item.duration && ` • ${formatDuration(item.duration)}`}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
+                          {/* Audio Player in Dialog */}
+                          {item.audioUrl && (
+                            <div className="flex items-center gap-4 p-4 bg-secondary/50 rounded-lg border border-primary/10">
+                              <Button
+                                onClick={() => toggleAudioPlayback(item.audioUrl!, `dialog-${item.id}`)}
+                                variant="outline"
+                                size="sm"
+                                className="hover:bg-primary/10"
+                              >
+                                {playingAudio === `dialog-${item.id}` ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                              </Button>
+                              <Volume2 className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">ฟังไฟล์เสียงต้นฉบับ</span>
+                              <audio
+                                id={`audio-dialog-${item.id}`}
+                                src={item.audioUrl}
+                                onEnded={() => setPlayingAudio(null)}
+                                onPause={() => setPlayingAudio(null)}
+                              />
+                            </div>
+                          )}
+                          
                           <Textarea
                             value={item.text}
                             readOnly
