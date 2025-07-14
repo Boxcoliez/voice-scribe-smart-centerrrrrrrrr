@@ -89,15 +89,38 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
     }
   };
 
-  const simulateTranscription = async (file: File): Promise<string> => {
-    // Simulate AI transcription process
-    const mockTexts = [
-      "สวัสดีครับ ยินดีต้อนรับสู่ Contact Center ของเรา ขอบคุณสำหรับการโทรเข้ามา วันนี้ผมสามารถช่วยอะไรคุณได้บ้างครับ",
-      "Thank you for calling our support center. How may I assist you today? I'm here to help resolve any issues you might have.",
-      "ご連絡いただきありがとうございます。本日はどのようなご用件でしょうか。お手伝いできることがございましたら、お気軽にお申し付けください。"
-    ];
+  const simulateTranscription = async (file: File): Promise<{ text: string; language: string }> => {
+    // Simulate language detection based on file name or content
+    const fileName = file.name.toLowerCase();
     
-    return mockTexts[Math.floor(Math.random() * mockTexts.length)];
+    // Mock transcription with proper language detection
+    const transcriptions = {
+      thai: {
+        text: "สวัสดีครับ ยินดีต้อนรับสู่ Contact Center ของเรา ขอบคุณสำหรับการโทรเข้ามา วันนี้ผมสามารถช่วยอะไรคุณได้บ้างครับ กรุณาแจ้งรายละเอียดปัญหาที่คุณพบเจอ เพื่อที่เราจะได้ให้ความช่วยเหลือได้อย่างถูกต้อง",
+        language: "ไทย"
+      },
+      english: {
+        text: "Thank you for calling our support center. How may I assist you today? I'm here to help resolve any issues you might have. Please provide details about your inquiry so I can offer the best possible assistance.",
+        language: "English"
+      },
+      japanese: {
+        text: "お電話いただきありがとうございます。本日はどのようなご用件でしょうか。お客様のお困りごとを解決するお手伝いをさせていただきます。詳細をお聞かせください。",
+        language: "日本語"
+      }
+    };
+    
+    // Simple language detection based on file name or randomize for demo
+    if (fileName.includes('th') || fileName.includes('thai')) {
+      return transcriptions.thai;
+    } else if (fileName.includes('jp') || fileName.includes('japanese')) {
+      return transcriptions.japanese;
+    } else if (fileName.includes('en') || fileName.includes('english')) {
+      return transcriptions.english;
+    }
+    
+    // Random selection for demo
+    const languages = Object.values(transcriptions);
+    return languages[Math.floor(Math.random() * languages.length)];
   };
 
   const processTranscription = async () => {
@@ -118,8 +141,8 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
         });
       }, 200);
 
-      // Simulate transcription API call
-      const transcriptionText = await simulateTranscription(selectedFile);
+      // Simulate transcription API call with language detection
+      const transcriptionResult = await simulateTranscription(selectedFile);
       
       clearInterval(progressInterval);
       setProgress(100);
@@ -128,9 +151,9 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
       const result: TranscriptionResult = {
         id: `trans_${Date.now()}`,
         fileName: selectedFile.name,
-        text: transcriptionText,
+        text: transcriptionResult.text,
         timestamp: new Date(),
-        language: 'auto-detected'
+        language: transcriptionResult.language
       };
 
       setTimeout(() => {
