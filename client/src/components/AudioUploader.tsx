@@ -2,10 +2,8 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Upload, FileAudio, X, Loader2, Play, Sparkles, Pause, Volume2, Languages, AudioLines } from "lucide-react";
+import { Upload, FileAudio, X, Loader2, Play, Pause, Volume2, Mic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadFile } from "@/lib/queryClient";
-import { Badge } from "@/components/ui/badge";
 
 interface AudioUploaderProps {
   disabled: boolean;
@@ -31,8 +29,6 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioDuration, setAudioDuration] = useState<number>(0);
-  const [currentTime, setCurrentTime] = useState<number>(0);
-  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
@@ -65,21 +61,18 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
   const handleFileSelect = (file: File) => {
     if (validateFile(file)) {
       setSelectedFile(file);
-      setDetectedLanguage(null);
       
-      // Create URL for audio playback
       const url = URL.createObjectURL(file);
       setAudioUrl(url);
       
-      // Create audio element to get duration
       const audio = new Audio(url);
       audio.addEventListener('loadedmetadata', () => {
         setAudioDuration(audio.duration);
       });
 
       toast({
-        title: "Audio File Ready! 🎵",
-        description: `${file.name} selected. Click the button to start transcription`,
+        title: "Audio File Ready",
+        description: `${file.name} selected successfully`,
       });
     }
   };
@@ -133,7 +126,6 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
     formData.append('model', 'whisper-1');
 
     try {
-      // Use environment OPENAI_API_KEY for Whisper transcription
       const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
         method: 'POST',
         headers: {
@@ -159,7 +151,7 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
       const result = await response.json();
       
       if (!result.text) {
-        throw new Error('ไม่สามารถถอดข้อความจากไฟล์เสียงได้');
+        throw new Error('Unable to transcribe audio file');
       }
       
       return result.text;
@@ -207,7 +199,6 @@ Please return only the improved text without any explanation or additional conte
   };
 
   const detectLanguage = (text: string): string => {
-    // Simple language detection based on character patterns
     const thaiPattern = /[\u0E00-\u0E7F]/;
     const japanesePattern = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
     const chinesePattern = /[\u4E00-\u9FFF]/;
@@ -226,18 +217,15 @@ Please return only the improved text without any explanation or additional conte
     try {
       setProgress(15);
       
-      // Step 1: Use Whisper to transcribe audio to text
       const rawTranscriptionText = await transcribeWithWhisper(file);
       
       setProgress(50);
       
-      // Step 2: Process with Gemini for improvement
       const processedText = await processWithGemini(rawTranscriptionText);
       
       setProgress(70);
       
       const detectedLanguage = detectLanguage(processedText);
-      setDetectedLanguage(detectedLanguage);
       
       setProgress(90);
 
@@ -265,26 +253,6 @@ Please return only the improved text without any explanation or additional conte
     }
   };
 
-  const getLanguageName = (languageCode: string): string => {
-    const languageMap: Record<string, string> = {
-      'en': 'English',
-      'th': 'ไทย (Thai)',
-      'zh': '中文 (Chinese)',
-      'ja': '日本語 (Japanese)',
-      'ko': '한국어 (Korean)',
-      'es': 'Español (Spanish)',
-      'fr': 'Français (French)',
-      'de': 'Deutsch (German)',
-      'it': 'Italiano (Italian)',
-      'pt': 'Português (Portuguese)',
-      'ru': 'Русский (Russian)',
-      'ar': 'العربية (Arabic)',
-      'hi': 'हिन्दी (Hindi)',
-    };
-    
-    return languageMap[languageCode] || languageCode.toUpperCase();
-  };
-
   const processTranscription = async () => {
     if (!selectedFile) return;
 
@@ -302,11 +270,10 @@ Please return only the improved text without any explanation or additional conte
         setAudioDuration(0);
         setIsProcessing(false);
         setProgress(0);
-        setDetectedLanguage(null);
         
         toast({
-          title: "Transcription Successful! 🎉",
-          description: `Audio transcription completed successfully`,
+          title: "Transcription Complete",
+          description: `Successfully transcribed ${selectedFile.name}`,
         });
       }, 800);
 
@@ -345,18 +312,18 @@ Please return only the improved text without any explanation or additional conte
   };
 
   return (
-    <Card className={`w-full shadow-custom-lg transition-all duration-300 border-2 ${
-      disabled ? 'opacity-50 pointer-events-none border-muted' : 'border-primary/20 hover:border-primary/40'
-    } ${selectedFile ? 'bg-gradient-to-br from-primary/5 to-accent/5' : ''}`}>
+    <Card className={`w-full shadow-professional transition-all duration-300 border-border/50 ${
+      disabled ? 'opacity-50 pointer-events-none' : ''
+    } ${selectedFile ? 'bg-primary/5' : ''}`}>
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-3 text-xl">
-          <div className="p-2 bg-gradient-primary rounded-lg">
-            <FileAudio className="h-6 w-6 text-white" />
+        <CardTitle className="flex items-center gap-3 text-xl font-semibold">
+          <div className="p-2 gradient-primary rounded-lg">
+            <Mic className="h-5 w-5 text-white" />
           </div>
-          Upload Audio File
+          Audio Upload
         </CardTitle>
         <CardDescription className="text-base">
-          Supports .mp3, .wav, .m4a files up to 25MB • Professional audio transcription service
+          Upload audio files (.mp3, .wav, .m4a) up to 25MB for transcription
         </CardDescription>
       </CardHeader>
       
@@ -366,27 +333,27 @@ Please return only the improved text without any explanation or additional conte
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`border-3 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
+            className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 focus-ring ${
               isDragOver 
-                ? 'border-primary bg-primary/10 scale-105' 
+                ? 'border-primary bg-primary/10 scale-[1.02]' 
                 : 'border-border hover:border-primary/60 hover:bg-primary/5'
             }`}
           >
             <div className="space-y-6">
-              <div className="mx-auto w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center shadow-custom-md animate-float">
-                <Upload className="h-10 w-10 text-white" />
+              <div className="mx-auto w-16 h-16 gradient-primary rounded-full flex items-center justify-center shadow-professional">
+                <Upload className="h-8 w-8 text-white" />
               </div>
               <div className="space-y-3">
-                <h3 className="text-xl font-semibold">Drag Files Here</h3>
-                <p className="text-muted-foreground text-lg">Or click to select files from your device</p>
+                <h3 className="text-xl font-semibold">Drop Audio Files Here</h3>
+                <p className="text-muted-foreground text-base">Or click to browse from your device</p>
               </div>
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={disabled}
                 size="lg"
-                className="bg-gradient-primary hover:opacity-90 text-white font-semibold px-8 py-3 text-lg shadow-custom-md hover:scale-105 transition-all duration-200"
+                className="gradient-primary hover:opacity-90 text-white font-medium px-8 py-3 text-base shadow-professional focus-ring"
               >
-                <Upload className="h-5 w-5 mr-2" />
+                <FileAudio className="h-5 w-5 mr-2" />
                 Select Audio File
               </Button>
             </div>
@@ -402,11 +369,11 @@ Please return only the improved text without any explanation or additional conte
 
         {selectedFile && !isProcessing && (
           <div className="space-y-6">
-            <div className="p-6 bg-gradient-to-r from-secondary to-secondary/50 rounded-xl border border-primary/20 shadow-custom-sm">
+            <div className="p-6 bg-secondary/50 rounded-xl border border-border/50 shadow-professional">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-primary rounded-lg shadow-custom-sm">
-                    <FileAudio className="h-8 w-8 text-white" />
+                  <div className="p-3 gradient-primary rounded-lg shadow-professional">
+                    <FileAudio className="h-6 w-6 text-white" />
                   </div>
                   <div>
                     <p className="font-semibold text-lg">{selectedFile.name}</p>
@@ -416,24 +383,23 @@ Please return only the improved text without any explanation or additional conte
                     </p>
                   </div>
                 </div>
-                <Button onClick={removeFile} variant="outline" size="sm" className="hover:bg-destructive/10">
+                <Button onClick={removeFile} variant="outline" size="sm" className="hover:bg-destructive/10 focus-ring">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
               
-              {/* Audio Player */}
               {audioUrl && (
-                <div className="flex items-center gap-4 p-4 bg-background/50 rounded-lg border border-primary/10">
+                <div className="flex items-center gap-4 p-4 bg-background/50 rounded-lg border border-border/30">
                   <Button
                     onClick={toggleAudioPlayback}
                     variant="outline"
                     size="sm"
-                    className="hover:bg-primary/10"
+                    className="hover:bg-primary/10 focus-ring"
                   >
                     {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </Button>
                   <Volume2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Click to play audio file</span>
+                  <span className="text-sm text-muted-foreground font-medium">Preview audio file</span>
                   <audio
                     ref={audioRef}
                     src={audioUrl}
@@ -445,34 +411,30 @@ Please return only the improved text without any explanation or additional conte
               )}
             </div>
             
-            {/* Start Transcription Button */}
             <div className="flex justify-center">
               <Button 
                 onClick={processTranscription} 
                 disabled={disabled || !selectedFile || isProcessing}
                 size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-12 py-6 text-xl shadow-xl transform hover:scale-105 transition-all duration-200 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="gradient-primary hover:opacity-90 text-white font-semibold px-12 py-6 text-lg shadow-professional-lg focus-ring"
               >
-                <Play className="h-6 w-6 mr-3" />
+                <Play className="h-5 w-5 mr-3" />
                 Start Transcription
-                <Sparkles className="h-6 w-6 ml-3" />
               </Button>
             </div>
-            
-
           </div>
         )}
 
         {isProcessing && (
           <div className="space-y-6">
-            <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/30">
-              <div className="p-3 bg-gradient-primary rounded-lg shadow-custom-sm">
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
+            <div className="flex items-center gap-4 p-6 bg-primary/10 rounded-xl border border-primary/30">
+              <div className="p-3 gradient-primary rounded-lg shadow-professional">
+                <Loader2 className="h-6 w-6 text-white animate-spin" />
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-lg">Processing: {selectedFile?.name}</p>
                 <p className="text-muted-foreground text-base">
-                  Using Whisper + Gemini AI for transcription and enhancement...
+                  Using Whisper + Gemini AI for high-quality transcription...
                 </p>
               </div>
             </div>
@@ -486,8 +448,8 @@ Please return only the improved text without any explanation or additional conte
               <div className="text-center text-sm text-muted-foreground">
                 {progress < 30 && "Transcribing audio with Whisper AI..."}
                 {progress >= 30 && progress < 60 && "Enhancing text with Gemini AI..."}
-                {progress >= 60 && progress < 90 && "Detecting language and refining text..."}
-                {progress >= 90 && "Finalizing results..."}
+                {progress >= 60 && progress < 90 && "Detecting language and formatting..."}
+                {progress >= 90 && "Finalizing transcription..."}
               </div>
             </div>
           </div>

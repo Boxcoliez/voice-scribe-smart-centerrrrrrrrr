@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Key, Check, AlertCircle, Sparkles, Brain } from "lucide-react";
+import { Key, Check, AlertCircle, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ApiKeyInputProps {
@@ -19,7 +18,6 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
 
   const validateApiKey = async (key: string): Promise<boolean> => {
     try {
-      // First try to list models to validate the API key
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`, {
         method: 'GET',
         headers: {
@@ -29,7 +27,6 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
       
       if (response.ok) {
         const data = await response.json();
-        // Check if we have access to any Gemini models
         const hasGeminiModels = data.models?.some((model: any) => 
           model.name?.includes('gemini')
         );
@@ -61,20 +58,20 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
       if (isValid) {
         onApiKeyChange(tempApiKey.trim());
         toast({
-          title: "Success! 🎉",
-          description: "Gemini API Key is valid and ready to use",
+          title: "Success",
+          description: "Gemini API Key validated successfully",
         });
       } else {
         toast({
           title: "Invalid API Key",
-          description: "Unable to connect to Gemini API. Please check that your API Key is correct and Gemini API is enabled",
+          description: "Please check your API Key and try again",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
         title: "Validation Error",
-        description: "Unable to validate API Key. Please check your internet connection",
+        description: "Unable to validate API Key",
         variant: "destructive",
       });
     } finally {
@@ -91,33 +88,24 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
     });
   };
 
-  const providerInfo = {
-    name: "Google Gemini",
-    icon: <Sparkles className="h-5 w-5 text-blue-600" />,
-    placeholder: "AIzaSy...",
-    description: "Enter Gemini API Key for audio transcription (System uses Whisper + Gemini automatically)",
-    keyGuide: "Get your free API Key from Google AI Studio (aistudio.google.com)"
-  };
-
   return (
-    <Card className="w-full shadow-custom-lg border-2 border-primary/20 bg-gradient-card">
+    <Card className="w-full shadow-professional border-border/50">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-3 text-xl">
-          <Key className="h-6 w-6 text-primary" />
+        <CardTitle className="flex items-center gap-3 text-xl font-semibold">
+          <div className="p-2 gradient-primary rounded-lg">
+            <Key className="h-5 w-5 text-white" />
+          </div>
           API Configuration
         </CardTitle>
         <CardDescription className="text-base">
-          Enter your Gemini API Key to begin using the audio transcription service
+          Enter your Google Gemini API Key to enable audio transcription
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-
-
-        {/* API Key Input */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            {providerInfo.icon}
-            <Label htmlFor="apiKey" className="text-base font-semibold">{providerInfo.name} API Key</Label>
+            <Sparkles className="h-4 w-4 text-primary" />
+            <Label htmlFor="apiKey" className="text-sm font-medium">Gemini API Key</Label>
           </div>
           
           <div className="space-y-2">
@@ -125,27 +113,27 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
               <Input
                 id="apiKey"
                 type="password"
-                placeholder={`Enter ${providerInfo.name} API Key... (${providerInfo.placeholder})`}
+                placeholder="Enter your Gemini API Key..."
                 value={tempApiKey}
                 onChange={(e) => setTempApiKey(e.target.value)}
-                className="font-mono text-lg h-12 border-2 border-primary/20 focus:border-primary/40"
+                className="font-mono text-sm h-11 border-2 focus:border-primary/50 focus-ring"
               />
               {apiKey ? (
                 <Button 
                   onClick={handleClearApiKey}
                   variant="outline" 
-                  size="lg"
-                  className="shrink-0 h-12 px-4 border-2 border-red-200 text-red-600 hover:bg-red-50"
+                  size="default"
+                  className="shrink-0 h-11 px-4 border-2 border-destructive/20 text-destructive hover:bg-destructive/10 focus-ring"
                 >
-                  <AlertCircle className="h-5 w-5 mr-2" />
+                  <AlertCircle className="h-4 w-4 mr-2" />
                   Remove
                 </Button>
               ) : (
                 <Button 
                   onClick={handleSaveApiKey}
                   disabled={!tempApiKey.trim() || isValidating}
-                  size="lg"
-                  className="shrink-0 h-12 px-6 bg-gradient-primary hover:opacity-90 text-white font-semibold"
+                  size="default"
+                  className="shrink-0 h-11 px-6 gradient-primary hover:opacity-90 text-white font-medium focus-ring"
                 >
                   {isValidating ? (
                     <div className="flex items-center gap-2">
@@ -154,7 +142,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
                     </div>
                   ) : (
                     <>
-                      <Check className="h-5 w-5 mr-2" />
+                      <Check className="h-4 w-4 mr-2" />
                       Validate & Save
                     </>
                   )}
@@ -163,26 +151,25 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
             </div>
             
             <p className="text-sm text-muted-foreground">
-              {providerInfo.keyGuide}
+              Get your free API Key from Google AI Studio (aistudio.google.com)
             </p>
           </div>
         </div>
         
-        {/* Status */}
         {apiKey ? (
-          <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-success/20 to-success/10 text-success rounded-xl border-2 border-success/30">
-            <Check className="h-6 w-6" />
+          <div className="flex items-center gap-3 p-4 bg-success/10 text-success rounded-lg border border-success/20">
+            <Check className="h-5 w-5" />
             <div>
-              <div className="font-semibold text-lg">{providerInfo.name} Ready</div>
-              <div className="text-sm opacity-80">You can now upload audio files</div>
+              <div className="font-medium">API Key Active</div>
+              <div className="text-sm opacity-80">Ready for audio transcription</div>
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-warning/20 to-warning/10 text-warning rounded-xl border-2 border-warning/30">
-            <AlertCircle className="h-6 w-6" />
+          <div className="flex items-center gap-3 p-4 bg-warning/10 text-warning rounded-lg border border-warning/20">
+            <AlertCircle className="h-5 w-5" />
             <div>
-              <div className="font-semibold text-lg">รอการตั้งค่า API Key</div>
-              <div className="text-sm opacity-80">กรุณาใส่ API Key เพื่อเริ่มใช้งาน</div>
+              <div className="font-medium">API Key Required</div>
+              <div className="text-sm opacity-80">Please enter your API Key to continue</div>
             </div>
           </div>
         )}
