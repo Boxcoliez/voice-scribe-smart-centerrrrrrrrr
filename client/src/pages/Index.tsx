@@ -50,25 +50,25 @@ const Index = () => {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-8">
         <div className="text-center space-y-4 mb-8">
-          <div className="flex justify-center gap-6 mb-6">
-            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">ความเร็วสูง</span>
+          <div className="flex justify-center gap-6 mb-8">
+            <div className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-full border border-blue-200 dark:border-blue-700 shadow-sm">
+              <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">Lightning Fast</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-success/10 rounded-full border border-success/20">
-              <Shield className="h-4 w-4 text-success" />
-              <span className="text-sm font-medium">ปลอดภัย</span>
+            <div className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-full border border-emerald-200 dark:border-emerald-700 shadow-sm">
+              <Shield className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Enterprise Secure</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-accent/10 rounded-full border border-accent/20">
-              <Globe className="h-4 w-4 text-accent-foreground" />
-              <span className="text-sm font-medium">หลายภาษา</span>
+            <div className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-full border border-purple-200 dark:border-purple-700 shadow-sm">
+              <Globe className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <span className="text-sm font-semibold text-purple-800 dark:text-purple-200">Multi-Language</span>
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-foreground">
-            แปลงเสียงเป็นข้อความด้วย AI ที่ทันสมัยที่สุด
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            รองรับการตรวจจับภาษาอัตโนมัติ ความแม่นยำสูง และประมวลผลรวดเร็ว
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-white dark:via-slate-200 dark:to-white bg-clip-text text-transparent mb-6">
+            Professional AI Audio Transcription
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Advanced hybrid AI technology featuring automatic language detection, exceptional accuracy, and enterprise-grade processing for professional use
           </p>
         </div>
       </section>
@@ -103,14 +103,14 @@ const Index = () => {
                     <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-1">
-                      เทคโนโลยี Hybrid AI Transcription
+                    <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                      Hybrid AI Transcription Technology
                     </h3>
                     <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                      <p>• ใช้ Whisper AI เพื่อแปลงเสียงเป็นข้อความ</p>
-                      <p>• ประมวลผลและปรับปรุงด้วย Gemini AI</p>
-                      <p>• ขนาดไฟล์เสียงต้องไม่เกิน 25MB</p>
-                      <p>• รองรับไฟล์: MP3, WAV, M4A</p>
+                      <p>• Powered by Whisper AI for audio-to-text conversion</p>
+                      <p>• Enhanced and refined by Gemini AI processing</p>
+                      <p>• Maximum file size: 25MB</p>
+                      <p>• Supported formats: MP3, WAV, M4A</p>
                     </div>
                   </div>
                 </div>

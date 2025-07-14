@@ -146,11 +146,11 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
         const errorData = await response.json().catch(() => ({}));
         
         if (response.status === 429) {
-          throw new Error('Whisper API rate limit exceeded - กรุณารอสักครู่แล้วลองใหม่');
+          throw new Error('Whisper API rate limit exceeded - Please wait a moment and try again');
         } else if (response.status === 401) {
-          throw new Error('ไม่สามารถเข้าถึง Whisper API ได้ - กรุณาลองใหม่อีกครั้ง');
+          throw new Error('Unable to access Whisper API - Please try again');
         } else if (response.status === 413) {
-          throw new Error('ไฟล์เสียงใหญ่เกินไป - กรุณาใช้ไฟล์ที่เล็กกว่า 25MB');
+          throw new Error('Audio file too large - Please use a file smaller than 25MB');
         } else {
           throw new Error(`Whisper API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
         }
@@ -165,7 +165,7 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
       return result.text;
     } catch (error: any) {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        throw new Error('ไม่สามารถเชื่อมต่อกับ Whisper API ได้ - กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+        throw new Error('Unable to connect to Whisper API - Please check your internet connection');
       }
       throw error;
     }
@@ -181,11 +181,11 @@ export const AudioUploader = ({ disabled, onTranscriptionResult, apiKey }: Audio
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `กรุณาช่วยปรับปรุงและจัดรูปแบบข้อความที่ได้จากการถอดเสียงให้อ่านง่ายขึ้น เพิ่มเครื่องหมายวรรคตอน แก้ไขคำผิด และจัดวรรคตอนให้เหมาะสม:
+              text: `Please improve and format the following transcribed text for better readability. Add proper punctuation, correct any errors, and organize the text appropriately:
 
 ${text}
 
-กรุณาคืนข้อความที่ปรับปรุงแล้วเท่านั้น ไม่ต้องอธิบายหรือเพิ่มเติมอะไร`
+Please return only the improved text without any explanation or additional content.`
             }]
           }]
         }),
@@ -211,10 +211,14 @@ ${text}
     const thaiPattern = /[\u0E00-\u0E7F]/;
     const japanesePattern = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
     const chinesePattern = /[\u4E00-\u9FFF]/;
+    const koreanPattern = /[\uAC00-\uD7AF]/;
+    const arabicPattern = /[\u0600-\u06FF]/;
     
-    if (thaiPattern.test(text)) return 'ไทย';
-    if (japanesePattern.test(text)) return '日本語';
-    if (chinesePattern.test(text)) return '中文';
+    if (thaiPattern.test(text)) return 'Thai';
+    if (japanesePattern.test(text)) return 'Japanese';
+    if (chinesePattern.test(text)) return 'Chinese';
+    if (koreanPattern.test(text)) return 'Korean';
+    if (arabicPattern.test(text)) return 'Arabic';
     return 'English';
   };
 
@@ -249,7 +253,7 @@ ${text}
     } catch (error: any) {
       console.error('Transcription error:', error);
       
-      let errorMessage = 'ไม่สามารถแปลงไฟล์เสียงได้';
+      let errorMessage = 'Unable to transcribe audio file';
       
       if (error.message) {
         errorMessage = error.message;
@@ -301,8 +305,8 @@ ${text}
         setDetectedLanguage(null);
         
         toast({
-          title: "สำเร็จ! 🎉",
-          description: `แปลงเสียงเป็นข้อความเรียบร้อยแล้ว`,
+          title: "Transcription Successful! 🎉",
+          description: `Audio transcription completed successfully`,
         });
       }, 800);
 
@@ -311,10 +315,10 @@ ${text}
       setIsProcessing(false);
       setProgress(0);
       
-      const errorMessage = error?.message || 'ไม่สามารถแปลงไฟล์เสียงได้ กรุณาลองใหม่อีกครั้ง';
+      const errorMessage = error?.message || 'Unable to transcribe audio file. Please try again.';
       
       toast({
-        title: "เกิดข้อผิดพลาด",
+        title: "Transcription Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -349,10 +353,10 @@ ${text}
           <div className="p-2 bg-gradient-primary rounded-lg">
             <FileAudio className="h-6 w-6 text-white" />
           </div>
-          อัปโหลดไฟล์เสียง
+          Upload Audio File
         </CardTitle>
         <CardDescription className="text-base">
-          รองรับไฟล์ .mp3, .wav, .m4a ขนาดไม่เกิน 25MB • ระบบจะถอดข้อความจากเสียงจริง
+          Supports .mp3, .wav, .m4a files up to 25MB • Professional audio transcription service
         </CardDescription>
       </CardHeader>
       
@@ -373,8 +377,8 @@ ${text}
                 <Upload className="h-10 w-10 text-white" />
               </div>
               <div className="space-y-3">
-                <h3 className="text-xl font-semibold">ลากไฟล์มาวางที่นี่</h3>
-                <p className="text-muted-foreground text-lg">หรือคลิกเพื่อเลือกไฟล์จากเครื่องของคุณ</p>
+                <h3 className="text-xl font-semibold">Drag Files Here</h3>
+                <p className="text-muted-foreground text-lg">Or click to select files from your device</p>
               </div>
               <Button
                 onClick={() => fileInputRef.current?.click()}
@@ -383,7 +387,7 @@ ${text}
                 className="bg-gradient-primary hover:opacity-90 text-white font-semibold px-8 py-3 text-lg shadow-custom-md hover:scale-105 transition-all duration-200"
               >
                 <Upload className="h-5 w-5 mr-2" />
-                เลือกไฟล์เสียง
+                Select Audio File
               </Button>
             </div>
             <input
@@ -407,8 +411,8 @@ ${text}
                   <div>
                     <p className="font-semibold text-lg">{selectedFile.name}</p>
                     <p className="text-muted-foreground">
-                      ขนาด: {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                      {audioDuration > 0 && ` • ความยาว: ${formatDuration(audioDuration)}`}
+                      Size: {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                      {audioDuration > 0 && ` • Duration: ${formatDuration(audioDuration)}`}
                     </p>
                   </div>
                 </div>
@@ -429,7 +433,7 @@ ${text}
                     {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </Button>
                   <Volume2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">คลิกเพื่อฟังไฟล์เสียง</span>
+                  <span className="text-sm text-muted-foreground">Click to play audio file</span>
                   <audio
                     ref={audioRef}
                     src={audioUrl}
@@ -441,17 +445,17 @@ ${text}
               )}
             </div>
             
-            {/* ปุ่มเริ่มแปลงที่ใหญ่และชัดเจน */}
+            {/* Start Transcription Button */}
             <div className="flex justify-center">
               <Button 
                 onClick={processTranscription} 
                 disabled={disabled || !selectedFile || isProcessing}
                 size="lg"
-                className="bg-gradient-accent hover:opacity-90 text-accent-foreground font-bold px-16 py-8 text-2xl shadow-custom-lg transform hover:scale-105 transition-all duration-200 animate-glow rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-12 py-6 text-xl shadow-xl transform hover:scale-105 transition-all duration-200 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Play className="h-8 w-8 mr-4" />
-                เริ่มแปลงเสียงเป็นข้อความ
-                <Sparkles className="h-8 w-8 ml-4" />
+                <Play className="h-6 w-6 mr-3" />
+                Start Transcription
+                <Sparkles className="h-6 w-6 ml-3" />
               </Button>
             </div>
             
@@ -466,24 +470,24 @@ ${text}
                 <Loader2 className="h-8 w-8 text-white animate-spin" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-lg">กำลังประมวลผล: {selectedFile?.name}</p>
+                <p className="font-semibold text-lg">Processing: {selectedFile?.name}</p>
                 <p className="text-muted-foreground text-base">
-                  กำลังใช้ Whisper + Gemini AI ถอดและปรับปรุงข้อความ...
+                  Using Whisper + Gemini AI for transcription and enhancement...
                 </p>
               </div>
             </div>
             
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="font-medium">ความคืบหน้า</span>
+                <span className="font-medium">Progress</span>
                 <span className="font-bold text-primary">{progress}%</span>
               </div>
               <Progress value={progress} className="h-3 bg-secondary" />
               <div className="text-center text-sm text-muted-foreground">
-                {progress < 30 && "กำลังถอดข้อความด้วย Whisper AI..."}
-                {progress >= 30 && progress < 60 && "กำลังประมวลผลด้วย Gemini AI..."}
-                {progress >= 60 && progress < 90 && "กำลังตรวจจับภาษาและปรับปรุงข้อความ..."}
-                {progress >= 90 && "กำลังจัดรูปแบบผลลัพธ์..."}
+                {progress < 30 && "Transcribing audio with Whisper AI..."}
+                {progress >= 30 && progress < 60 && "Enhancing text with Gemini AI..."}
+                {progress >= 60 && progress < 90 && "Detecting language and refining text..."}
+                {progress >= 90 && "Finalizing results..."}
               </div>
             </div>
           </div>

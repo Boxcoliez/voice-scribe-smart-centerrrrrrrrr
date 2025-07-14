@@ -41,8 +41,8 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
   const handleSaveApiKey = async () => {
     if (!tempApiKey.trim()) {
       toast({
-        title: "ข้อผิดพลาด",
-        description: "กรุณาใส่ API Key",
+        title: "Error",
+        description: "Please enter your API Key",
         variant: "destructive",
       });
       return;
@@ -56,20 +56,20 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
       if (isValid) {
         onApiKeyChange(tempApiKey.trim());
         toast({
-          title: "สำเร็จ! 🎉",
-          description: "Gemini API Key ถูกต้อง พร้อมใช้งาน",
+          title: "Success! 🎉",
+          description: "Gemini API Key is valid and ready to use",
         });
       } else {
         toast({
-          title: "API Key ไม่ถูกต้อง",
-          description: "ไม่สามารถเชื่อมต่อกับ Gemini ได้",
+          title: "Invalid API Key",
+          description: "Unable to connect to Gemini API",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถตรวจสอบ API Key ได้",
+        title: "Validation Error",
+        description: "Unable to validate API Key",
         variant: "destructive",
       });
     } finally {
@@ -81,8 +81,8 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
     setTempApiKey("");
     onApiKeyChange("");
     toast({
-      title: "ลบ API Key แล้ว",
-      description: "คุณสามารถใส่ API Key ใหม่ได้",
+      title: "API Key Removed",
+      description: "You can enter a new API Key",
     });
   };
 
@@ -90,8 +90,8 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
     name: "Google Gemini",
     icon: <Sparkles className="h-5 w-5 text-blue-600" />,
     placeholder: "AIzaSy...",
-    description: "ใส่ Gemini API Key เพื่อใช้งาน AI transcription (ระบบจะใช้ Whisper + Gemini แบบอัตโนมัติ)",
-    keyGuide: "รับ API Key ฟรีจาก Google AI Studio"
+    description: "Enter Gemini API Key for AI transcription (System uses Whisper + Gemini automatically)",
+    keyGuide: "Get your free API Key from Google AI Studio"
   };
 
   return (
@@ -102,7 +102,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
           API Configuration
         </CardTitle>
         <CardDescription className="text-base">
-          ใส่ Gemini API Key เพื่อเริ่มใช้งาน AI transcription
+          Enter your Gemini API Key to begin using AI transcription
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -120,7 +120,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
               <Input
                 id="apiKey"
                 type="password"
-                placeholder={`ใส่ ${providerInfo.name} API Key... (${providerInfo.placeholder})`}
+                placeholder={`Enter ${providerInfo.name} API Key... (${providerInfo.placeholder})`}
                 value={tempApiKey}
                 onChange={(e) => setTempApiKey(e.target.value)}
                 className="font-mono text-lg h-12 border-2 border-primary/20 focus:border-primary/40"
@@ -133,7 +133,7 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
                   className="shrink-0 h-12 px-4 border-2 border-red-200 text-red-600 hover:bg-red-50"
                 >
                   <AlertCircle className="h-5 w-5 mr-2" />
-                  ลบ
+                  Remove
                 </Button>
               ) : (
                 <Button 
@@ -145,12 +145,12 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
                   {isValidating ? (
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      ตรวจสอบ...
+                      Validating...
                     </div>
                   ) : (
                     <>
                       <Check className="h-5 w-5 mr-2" />
-                      ตรวจสอบ & บันทึก
+                      Validate & Save
                     </>
                   )}
                 </Button>
@@ -168,8 +168,8 @@ export const ApiKeyInput = ({ apiKey, onApiKeyChange }: ApiKeyInputProps) => {
           <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-success/20 to-success/10 text-success rounded-xl border-2 border-success/30">
             <Check className="h-6 w-6" />
             <div>
-              <div className="font-semibold text-lg">{providerInfo.name} พร้อมใช้งาน</div>
-              <div className="text-sm opacity-80">คุณสามารถอัปโหลดไฟล์เสียงได้แล้ว</div>
+              <div className="font-semibold text-lg">{providerInfo.name} Ready</div>
+              <div className="text-sm opacity-80">You can now upload audio files</div>
             </div>
           </div>
         ) : (
